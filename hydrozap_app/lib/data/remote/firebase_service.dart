@@ -15,12 +15,12 @@ import 'package:hydrozap_app/core/utils/logger.dart';
 /// FirebaseService handles all remote database operations
 class FirebaseService {
   // Firebase Realtime Database URL
-  static const String _baseUrl = 'https://hydroponics-1bab7-default-rtdb.firebaseio.com/';
+  static const String _baseUrl = 'https://hydroponics-4ef1b-default-rtdb.firebaseio.com/';
   
   // Firebase Auth and Google Sign In - lazy initialization
   FirebaseAuth get _auth => FirebaseAuth.instance;
   GoogleSignIn get _googleSignIn => GoogleSignIn(
-    clientId: kIsWeb ? '182641552206-nptt4ghfvv5sr933vkp8ou4lb38umhme.apps.googleusercontent.com' : null
+    clientId: kIsWeb ? '103744869142076457804-182641552206-nptt4ghfvv5sr933vkp8ou4lb38umhme.apps.googleusercontent.com' : null
   );
   
   // Singleton instance
@@ -43,13 +43,13 @@ class FirebaseService {
       try {
         await Firebase.initializeApp(
           options: const FirebaseOptions(
-            apiKey: "AIzaSyBxr6fiKPQMKtRPKmynPZP9JO54tid9jP0",
-            appId: "1:246984811775:web:9cd5bed9ff95b85f39c754",
-            messagingSenderId: "246984811775",
-            projectId: "hydroponics-1bab7",
-            authDomain: "hydroponics-1bab7.firebaseapp.com",
-            databaseURL: "https://hydroponics-1bab7-default-rtdb.firebaseio.com",
-            storageBucket: "hydroponics-1bab7.appspot.com",
+            apiKey: "AIzaSyD-9tSrQWQm36-LCzQeRjL8tE0UZo9LfQA",
+            appId: "1:103744869142076457804:web:07e139bec9c0cc4697ad2e",
+            messagingSenderId: "103744869142076457804",
+            projectId: "hydroponics-4ef1b",
+            authDomain: "hydroponics-4ef1b.firebaseapp.com",
+            databaseURL: "https://hydroponics-4ef1b-default-rtdb.firebaseio.com",
+            storageBucket: "hydroponics-4ef1b.appspot.com",
           ),
         );
       } catch (initError) {

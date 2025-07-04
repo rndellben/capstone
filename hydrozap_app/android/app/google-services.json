@@ -1,37 +1,27 @@
 {
     "project_info": {
-        "project_number": "182641552206",
-        "firebase_url": "https://hydroponics-1bab7-default-rtdb.firebaseio.com",
-        "project_id": "hydroponics-1bab7",
-        "storage_bucket": "hydroponics-1bab7.firebasestorage.app"
+        "project_number": "142453978219",
+        "firebase_url": "https://hydroponics-4ef1b-default-rtdb.asia-southeast1.firebasedatabase.app",
+        "project_id": "hydroponics-4ef1b",
+        "storage_bucket": "hydroponics-4ef1b.firebasestorage.app"
     },
     "client": [
         {
             "client_info": {
-                "mobilesdk_app_id": "1:182641552206:android:f09964d9fc8dc11ddc0c1f",
+                "mobilesdk_app_id": "1:142453978219:android:af275eb9eb55c08497ad2e",
                 "android_client_info": {
                     "package_name": "com.example.hydrozap_app"
                 }
             },
-            "oauth_client": [
-                {
-                    "client_id": "182641552206-nptt4ghfvv5sr933vkp8ou4lb38umhme.apps.googleusercontent.com",
-                    "client_type": 3
-                }
-            ],
+            "oauth_client": [],
             "api_key": [
                 {
-                    "current_key": "AIzaSyDur5CqylSRREnAG0qtGEdmndIxCn9wC_E"
+                    "current_key": "AIzaSyBxJM379Nt7wS5uWvswsRl2-axGSvL0cTo"
                 }
             ],
             "services": {
                 "appinvite_service": {
-                    "other_platform_oauth_client": [
-                        {
-                            "client_id": "182641552206-nptt4ghfvv5sr933vkp8ou4lb38umhme.apps.googleusercontent.com",
-                            "client_type": 3
-                        }
-                    ]
+                    "other_platform_oauth_client": []
                 }
             }
         }

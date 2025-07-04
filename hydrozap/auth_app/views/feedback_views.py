@@ -83,7 +83,7 @@ class FeedbackView(APIView):
             # Create the email message
             subject = f"[HydroZap Feedback] {feedback_type}"
             from_email = settings.DEFAULT_FROM_EMAIL
-            recipient_list = ["benedictcalilung10@gmail.com"]  # Replace with actual admin emails
+            recipient_list = ["hydrozapservice@gmail.com"]  # Replace with actual admin emails
             
             msg = EmailMultiAlternatives(subject, text_message, from_email, recipient_list)
             msg.attach_alternative(html_message, "text/html")

@@ -22,6 +22,7 @@ class GrowDetailsPage extends StatefulWidget {
   final String deviceName;
   final String profileName;
   final int growDuration;
+  final bool showHarvestOnLoad;
 
   const GrowDetailsPage({
     super.key,
@@ -29,6 +30,7 @@ class GrowDetailsPage extends StatefulWidget {
     required this.deviceName,
     required this.profileName,
     this.growDuration = 60,
+    this.showHarvestOnLoad = false,
   });
 
   @override
@@ -71,6 +73,13 @@ class _GrowDetailsPageState extends State<GrowDetailsPage> with SingleTickerProv
     _progressTimer = Timer.periodic(const Duration(minutes: 1), (timer) {
       _updateProgress();
     });
+
+    // If showHarvestOnLoad is true, trigger the harvest dialog after build
+    if (widget.showHarvestOnLoad) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _navigateToHarvestLog();
+      });
+    }
   }
   
   @override
@@ -742,15 +751,6 @@ class _GrowDetailsPageState extends State<GrowDetailsPage> with SingleTickerProv
   }
 
   Widget _buildMetricsGrid(BuildContext context) {
-    if (_isLoadingMetrics) {
-      return const Center(
-        child: CircularProgressIndicator(
-          color: AppColors.primary,
-        ),
-      );
-    }
-
-    final metrics = _currentMetrics ?? {};
     final currentStage = _getCurrentStage();
     final stageConditions = _growProfile?.optimalConditions;
     
@@ -769,6 +769,20 @@ class _GrowDetailsPageState extends State<GrowDetailsPage> with SingleTickerProv
       }
     }
 
+    if (currentConditions == null) {
+      return const Center(
+        child: Text('No target parameters available for this stage.'),
+      );
+    }
+
+    String formatRange(Range range, {String? unit}) {
+      if (unit != null) {
+        return '${range.min.toStringAsFixed(1)} - ${range.max.toStringAsFixed(1)}$unit';
+      } else {
+        return '${range.min.toStringAsFixed(1)} - ${range.max.toStringAsFixed(1)}';
+      }
+    }
+
     return GridView.count(
       shrinkWrap: true,
       physics: const NeverScrollableScrollPhysics(),
@@ -779,51 +793,27 @@ class _GrowDetailsPageState extends State<GrowDetailsPage> with SingleTickerProv
       children: [
         MetricCard(
           title: 'Temperature',
-          value: '${(metrics['temperature'] as num?)?.toStringAsFixed(1) ?? '--'}°C',
+          value: formatRange(currentConditions.temperature, unit: '°C'),
           icon: Icons.thermostat,
           iconColor: Colors.orange,
-          trend: currentConditions?.temperature != null && metrics['temperature'] != null
-              ? (metrics['temperature'] as num) > currentConditions!.temperature.max ? 'High' : 'Low'
-              : null,
-          trendDirection: currentConditions?.temperature != null && metrics['temperature'] != null
-              ? (metrics['temperature'] as num) > currentConditions!.temperature.max ? TrendDirection.up : TrendDirection.down
-              : TrendDirection.neutral,
         ),
         MetricCard(
           title: 'Humidity',
-          value: '${(metrics['humidity'] as num?)?.toStringAsFixed(1) ?? '--'}%',
+          value: formatRange(currentConditions.humidity, unit: '%'),
           icon: Icons.water_drop,
           iconColor: Colors.blue,
-          trend: currentConditions?.humidity != null && metrics['humidity'] != null
-              ? (metrics['humidity'] as num) > currentConditions!.humidity.max ? 'High' : 'Low'
-              : null,
-          trendDirection: currentConditions?.humidity != null && metrics['humidity'] != null
-              ? (metrics['humidity'] as num) > currentConditions!.humidity.max ? TrendDirection.up : TrendDirection.down
-              : TrendDirection.neutral,
         ),
         MetricCard(
           title: 'pH Level',
-          value: (metrics['ph'] as num?)?.toStringAsFixed(1) ?? '--',
+          value: formatRange(currentConditions.phRange),
           icon: Icons.science,
           iconColor: Colors.purple,
-          trend: currentConditions?.phRange != null && metrics['ph'] != null
-              ? (metrics['ph'] as num) > currentConditions!.phRange.max ? 'High' : 'Low'
-              : null,
-          trendDirection: currentConditions?.phRange != null && metrics['ph'] != null
-              ? (metrics['ph'] as num) > currentConditions!.phRange.max ? TrendDirection.up : TrendDirection.down
-              : TrendDirection.neutral,
         ),
         MetricCard(
           title: 'EC',
-          value: (metrics['ec'] as num?)?.toStringAsFixed(1) ?? '--',
+          value: formatRange(currentConditions.ecRange),
           icon: Icons.electric_bolt,
           iconColor: Colors.yellow,
-          trend: currentConditions?.ecRange != null && metrics['ec'] != null
-              ? (metrics['ec'] as num) > currentConditions!.ecRange.max ? 'High' : 'Low'
-              : null,
-          trendDirection: currentConditions?.ecRange != null && metrics['ec'] != null
-              ? (metrics['ec'] as num) > currentConditions!.ecRange.max ? TrendDirection.up : TrendDirection.down
-              : TrendDirection.neutral,
         ),
       ],
     );

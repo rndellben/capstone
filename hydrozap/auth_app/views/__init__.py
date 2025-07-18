@@ -16,15 +16,21 @@ from .device_views import (
 from .sensor_views import (
     SensorDataView,
     ActuatorDataView,
-    HistoricalSensorDataView
+    HistoricalSensorDataView,
+    DosingLogDataView
 )
 
 from .plant_views import (
     PlantProfileView,
+    PlantProfileCSVUploadView,
     GrowProfileView,
     GrowView,
     HarvestLogView,
-    HarvestReadinessView
+    HarvestReadinessView,
+    ProfileChangeLogView,
+    GlobalLeaderboardView,
+    PlantProfileCSVDownloadView,
+    GrowProfileCSVDownloadView
 )
 
 from .alert_views import (
@@ -78,13 +84,19 @@ __all__ = [
     'SensorDataView',
     'ActuatorDataView',
     'HistoricalSensorDataView',
+    'DosingLogDataView',
     
     # Plant views
     'PlantProfileView',
+    'PlantProfileCSVUploadView',
     'GrowProfileView',
     'GrowView',
     'HarvestLogView',
     'HarvestReadinessView',
+    'ProfileChangeLogView',
+    'GlobalLeaderboardView',
+    'PlantProfileCSVDownloadView',
+    'GrowProfileCSVDownloadView',
     
     # Alert views
     'AlertView',

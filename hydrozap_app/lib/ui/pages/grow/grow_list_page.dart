@@ -454,7 +454,20 @@ String _getProfileName(String profileId) {
                     ),
                     if (grow.status != 'harvested' && grow.harvestDate == null)
                       ElevatedButton.icon(
-                        onPressed: () => _navigateToHarvestLog(context, grow),
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => GrowDetailsPage(
+                                grow: grow,
+                                deviceName: deviceName,
+                                profileName: profileName,
+                                growDuration: growthDuration,
+                                showHarvestOnLoad: true, // Immediately show harvest dialog
+                              ),
+                            ),
+                          );
+                        },
                         icon: const Icon(Icons.grass, size: 18),
                         label: const Text('Harvest'),
                         style: ElevatedButton.styleFrom(

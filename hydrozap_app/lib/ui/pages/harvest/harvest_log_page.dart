@@ -40,6 +40,7 @@ class _HarvestLogPageState extends State<HarvestLogPage> with SingleTickerProvid
   final _formKey = GlobalKey<FormState>();
   final _yieldController = TextEditingController();
   final _ratingController = TextEditingController();
+  final _remarksController = TextEditingController();
   bool _isSubmitting = false;
   Map<String, TextEditingController> _metricControllers = {};
   late AnimationController _successAnimationController;
@@ -68,6 +69,7 @@ class _HarvestLogPageState extends State<HarvestLogPage> with SingleTickerProvid
   void dispose() {
     _yieldController.dispose();
     _ratingController.dispose();
+    _remarksController.dispose();
     _successAnimationController.dispose();
     for (var controller in _metricControllers.values) {
       controller.dispose();
@@ -527,6 +529,35 @@ class _HarvestLogPageState extends State<HarvestLogPage> with SingleTickerProvid
                           return null;
                         },
                       ),
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _remarksController,
+                        decoration: InputDecoration(
+                          labelText: 'Remarks',
+                          hintText: 'Enter any notes or observations about this harvest',
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          enabledBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: Colors.grey[300]!),
+                          ),
+                          focusedBorder: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(8),
+                            borderSide: BorderSide(color: AppColors.forest),
+                          ),
+                          filled: true,
+                          fillColor: Colors.grey[50],
+                          prefixIcon: Icon(
+                            Icons.note_alt,
+                            color: Colors.grey[400],
+                            size: 20,
+                          ),
+                        ),
+                        maxLines: 3,
+                        keyboardType: TextInputType.multiline,
+                      ),
                     ],
                   ),
                 ),
@@ -670,6 +701,7 @@ class _HarvestLogPageState extends State<HarvestLogPage> with SingleTickerProvid
           'isForcedHarvest': widget.isForcedHarvest,
           'forceHarvestReason': widget.forceHarvestReason,
           'performanceMetrics': performanceMetrics,
+          'remarks': _remarksController.text,
         }),
       );
 

@@ -231,6 +231,32 @@ class _MenuItems extends StatelessWidget {
       ),
     );
 
+    // Dosing Logs nav item (requires a deviceId)
+    final dosingLogsItem = Builder(
+      builder: (context) {
+        final devices = deviceProvider.devices;
+        final hasDevice = devices.isNotEmpty;
+        final deviceId = hasDevice ? devices.first.id : null;
+        return ListTile(
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 2),
+          leading: Icon(Icons.science, color: hasDevice ? AppColors.normal : Colors.grey, size: 22),
+          title: Text(
+            'Dosing Logs',
+            style: TextStyle(
+              color: hasDevice ? AppColors.normal : Colors.grey,
+              fontSize: 15,
+              fontWeight: FontWeight.w500,
+            ),
+          ),
+          enabled: hasDevice,
+          onTap: hasDevice
+              ? () => Navigator.of(context).pushNamed(AppRoutes.dosingLogs, arguments: deviceId)
+              : null,
+          tileColor: Colors.transparent,
+        );
+      },
+    );
+
     return ListView(
       padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
       children: [
@@ -241,7 +267,8 @@ class _MenuItems extends StatelessWidget {
 
         divider('Performance'),
         navItem('Results & Top Performers', Icons.analytics_outlined, AppRoutes.performanceResults),
-        navItem('Predictor', Icons.auto_graph, AppRoutes.predictor),
+        navItem('Global Leaderboard', Icons.emoji_events_outlined, AppRoutes.globalLeaderboard),
+        navItem('Crop Suitability', Icons.auto_graph, AppRoutes.predictor),
 
         divider('Profiles'),
         navItem('Grow Profiles', Icons.grain_rounded, AppRoutes.profileList),
@@ -251,6 +278,8 @@ class _MenuItems extends StatelessWidget {
         navItem('Alerts', Icons.notifications_active, AppRoutes.alerts,
             badge: dashboardProvider.alertCount.toString(), badgeColor: Colors.redAccent),
         dataMonitoringItem,  // Use the custom item instead of navItem
+        dosingLogsItem,
+        navItem('Changes Log', Icons.history, AppRoutes.changesLog),
         navItem('Settings', Icons.settings, AppRoutes.settings),
 
         const SizedBox(height: 16),

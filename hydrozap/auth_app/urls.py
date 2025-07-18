@@ -17,13 +17,16 @@ from .views import (
     SensorDataView,
     ActuatorDataView,
     HistoricalSensorDataView,
+    DosingLogDataView,
     
     # Plant views
+    PlantProfileCSVUploadView,
     PlantProfileView,
     GrowProfileView,
     GrowView,
     HarvestLogView,
     HarvestReadinessView,
+    GlobalLeaderboardView,
     
     # Alert views
     AlertView,
@@ -51,6 +54,7 @@ from .views import (
     DashboardCountsView,
     GrowCountView,
 )
+from .views.plant_views import PlantProfileView, PlantProfileCSVUploadView, GrowProfileView, GrowView, HarvestLogView, HarvestReadinessView, GrowCountView, ProfileChangeLogView, GlobalLeaderboardView, PlantProfileCSVDownloadView, GrowProfileCSVDownloadView
 
 urlpatterns = [
     # Auth endpoints
@@ -70,10 +74,14 @@ urlpatterns = [
     # Sensor and actuator endpoints
     path('sensors/', SensorDataView.as_view(), name='sensors'),
     path('actuators/', ActuatorDataView.as_view(), name='actuators'),
+    path('devices/<str:device_id>/dosing-logs/', DosingLogDataView.as_view(), name='dosing-logs'),
     
     # Plant profile endpoints
     path('plant-profiles/', PlantProfileView.as_view(), name='plant-profiles'),
+    path('plant-profiles/upload-csv/', PlantProfileCSVUploadView.as_view(), name='plant-profiles-csv-upload'),
     path('plant-profiles/<str:identifier>/', PlantProfileView.as_view(), name='plant-profile-detail'),
+    path('plant-profiles/<str:identifier>/download-csv/', PlantProfileCSVDownloadView.as_view(), name='plant_profile_csv_download'),
+    
     
     # Alert endpoints
     path('alerts/count/<str:user_id>/', AlertCountView.as_view(), name='alert-count'),
@@ -89,9 +97,13 @@ urlpatterns = [
     # Grow profile endpoints
     path('grow-profiles/', GrowProfileView.as_view(), name='grow-profile-list'), 
     path('grow-profiles/<str:profile_id>/', GrowProfileView.as_view(), name='grow-profile-detail'),
+    path('grow-profiles/<str:profile_id>/download-csv/', GrowProfileCSVDownloadView.as_view(), name='grow_profile_csv_download'),
     
     # Harvest log endpoints
     path("harvest-logs/<str:device_id>/", HarvestLogView.as_view(), name='harvest-logs'),
+    
+    # Global leaderboard endpoint
+    path("global-leaderboard/", GlobalLeaderboardView.as_view(), name='global-leaderboard'),
     
     # Dashboard counts endpoint
     path('dashboard/counts/', DashboardCountsView.as_view(), name='dashboard_counts'),

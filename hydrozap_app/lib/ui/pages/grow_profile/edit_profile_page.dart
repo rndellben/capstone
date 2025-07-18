@@ -707,12 +707,7 @@ class _EditProfilePageState extends State<EditProfilePage> {
           const SizedBox(height: 24),
           
           // Update Button Section
-          _buildSectionCard(
-            title: 'Save Changes',
-            icon: Icons.save,
-            iconColor: AppColors.success,
-            content: _buildUpdateButtonSection(),
-          ),
+          _buildUpdateButtonSection(),
         ],
       ),
     );
@@ -1186,10 +1181,23 @@ class _EditProfilePageState extends State<EditProfilePage> {
       children: [
         Row(
           children: [
+            OutlinedButton(
+              onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
+              child: const Text('Cancel'),
+              style: OutlinedButton.styleFrom(
+                foregroundColor: AppColors.textPrimary,
+                side: BorderSide(color: AppColors.textPrimary.withAlpha((0.3 * 255).round())),
+                padding: const EdgeInsets.symmetric(vertical: 16),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+              ),
+            ),
+            const SizedBox(width: 16),
             Expanded(
-              child: ElevatedButton.icon(
+              child: ElevatedButton(
                 onPressed: _isLoading ? null : () => _updateProfile(),
-                icon: _isLoading 
+                child: _isLoading 
                   ? const SizedBox(
                       width: 20,
                       height: 20,
@@ -1198,11 +1206,10 @@ class _EditProfilePageState extends State<EditProfilePage> {
                         strokeWidth: 2,
                       ),
                     )
-                  : const Icon(Icons.save),
-                label: Text(
-                  _isLoading ? 'Updating...' : 'Save Changes',
-                  style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
+                  : Text(
+                      _isLoading ? 'Updating...' : 'Save Changes',
+                      style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                    ),
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppColors.primary,
                   foregroundColor: Colors.white,
@@ -1210,20 +1217,6 @@ class _EditProfilePageState extends State<EditProfilePage> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(10),
                   ),
-                ),
-              ),
-            ),
-            const SizedBox(width: 16),
-            OutlinedButton.icon(
-              onPressed: _isLoading ? null : () => Navigator.of(context).pop(),
-              icon: const Icon(Icons.cancel),
-              label: const Text('Cancel'),
-              style: OutlinedButton.styleFrom(
-                foregroundColor: AppColors.textPrimary,
-                side: BorderSide(color: AppColors.textPrimary.withAlpha((0.3 * 255).round())),
-                padding: const EdgeInsets.symmetric(vertical: 16),
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(10),
                 ),
               ),
             ),

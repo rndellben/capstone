@@ -22,21 +22,17 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
   final _formKey = GlobalKey<FormState>();
   final _temperatureController = TextEditingController(text: '22.0');
   final _humidityController = TextEditingController(text: '65.0');
-  final _phController = TextEditingController(text: '6.5');
-  final _ecController = TextEditingController(text: '1.8');
-  final _tdsController = TextEditingController(text: '900');
   final _apiService = ApiService();
   bool _isLoading = false;
   String? _suggestedCrop;
   String? _recommendation;
+  String? _errorMessage;
+  List<dynamic> _allSuggestions = []; // Add a list to store all suggestions
 
   @override
   void dispose() {
     _temperatureController.dispose();
     _humidityController.dispose();
-    _phController.dispose();
-    _ecController.dispose();
-    _tdsController.dispose();
     super.dispose();
   }
 
@@ -50,15 +46,17 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
       return 'Please enter a valid number';
     }
     
-    if (min != null && numValue < min) {
-      return '$fieldName should be at least $min';
-    }
-    
-    if (max != null && numValue > max) {
-      return '$fieldName should not exceed $max';
-    }
-    
     return null;
+  }
+
+  // Helper method to normalize range text by replacing Unicode dashes with standard dash
+  String normalizeRangeText(String text) {
+    // Replace various Unicode dash characters with standard dash
+    return text.replaceAll('–', '-')
+              .replaceAll('—', '-')
+              .replaceAll('−', '-')
+              .replaceAll('\u2013', '-') // en dash
+              .replaceAll('\u2014', '-'); // em dash
   }
 
   Future<void> _getPrediction() async {
@@ -68,25 +66,58 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
       _isLoading = true;
       _suggestedCrop = null;
       _recommendation = null;
+      _errorMessage = null;
+      _allSuggestions = []; // Clear previous suggestions
     });
 
     try {
       final result = await _apiService.predictCropSuggestion(
         temperature: double.parse(_temperatureController.text),
         humidity: double.parse(_humidityController.text),
-        ph: double.parse(_phController.text),
-        ec: double.parse(_ecController.text),
-        tds: double.parse(_tdsController.text),
+        ph: 6.5, // Default value
+        ec: 1.8, // Default value
+        tds: 900, // Default value
       );
 
-      setState(() {
-        _suggestedCrop = result?['suggested_crop'];
-        _recommendation = result?['recommendation'];
-      });
+      if (result != null && result.containsKey('error')) {
+        // Store and show error message from the API
+        setState(() {
+          _errorMessage = result['error'];
+        });
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(_errorMessage!),
+            backgroundColor: AppColors.error,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+      } else {
+        setState(() {
+          _suggestedCrop = result?['suggested_crop'];
+          _recommendation = normalizeRangeText(result?['recommendation'] ?? '');
+          
+          // Process all suggestions and normalize range text
+          final suggestions = result?['all_suggestions'] ?? [];
+          _allSuggestions = suggestions.map((suggestion) {
+            return {
+              'crop': suggestion['crop'],
+              'temp_range': normalizeRangeText(suggestion['temp_range'] ?? ''),
+              'humidity_range': normalizeRangeText(suggestion['humidity_range'] ?? ''),
+              'pH_range': normalizeRangeText(suggestion['pH_range'] ?? ''),
+              'EC_range': normalizeRangeText(suggestion['EC_range'] ?? ''),
+            };
+          }).toList();
+        });
+      }
     } catch (e) {
+      setState(() {
+        _errorMessage = 'Error getting prediction: $e';
+      });
+      
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text('Error getting prediction: $e'),
+          content: Text(_errorMessage!),
           backgroundColor: AppColors.error,
         ),
       );
@@ -101,50 +132,90 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
     setState(() {
       _suggestedCrop = null;
       _recommendation = null;
+      _errorMessage = null;
+      _allSuggestions = []; // Clear all suggestions
     });
   }
   
   void _createGrowProfile() {
-    if (_suggestedCrop == null) return;
+    if (_suggestedCrop == null || _allSuggestions.isEmpty) return;
     
-    // Get values from the current input
-    final temperature = double.parse(_temperatureController.text);
-    final humidity = double.parse(_humidityController.text);
-    final ph = double.parse(_phController.text);
-    final ec = double.parse(_ecController.text);
-    final tds = double.parse(_tdsController.text);
+    // Show a dialog to select which crop to use if there are multiple suggestions
+    if (_allSuggestions.length > 1) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text('Select Crop for Profile'),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: _allSuggestions.length,
+              itemBuilder: (context, index) {
+                final suggestion = _allSuggestions[index];
+                return ListTile(
+                  leading: const Icon(Icons.eco_outlined, color: AppColors.leaf),
+                  title: Text(suggestion['crop']),
+                  subtitle: Text('${suggestion['temp_range']} | ${suggestion['humidity_range']}'),
+                  onTap: () {
+                    Navigator.pop(context);
+                    _createProfileWithCrop(suggestion);
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+          ],
+        ),
+      );
+    } else {
+      // If there's only one suggestion, use it directly
+      _createProfileWithCrop(_allSuggestions[0]);
+    }
+  }
+  
+  void _createProfileWithCrop(Map<String, dynamic> cropData) {
+    final String cropName = cropData['crop'];
     
-    // Calculate min/max range values (10% range)
-    final tempRange = temperature * 0.05;
-    final humidityRange = humidity * 0.05;
-    final ecRange = ec * 0.1;
-    final phRange = 0.3; // Standard pH range
-    final tdsRange = tds * 0.1; // 10% range for TDS
+    // Parse range values - make sure to use normalized values
+    final tempRange = cropData['temp_range'].toString().replaceAll('°C', '').split('-');
+    final humidityRange = cropData['humidity_range'].toString().replaceAll('%', '').split('-');
+    final phRange = cropData['pH_range'].toString().split('-');
+    final ecRange = cropData['EC_range'].toString().replaceAll(' mS/cm', '').split('-');
+    
+    // Calculate TDS range based on EC (TDS ≈ EC × 640)
+    final tdsMin = (double.tryParse(ecRange[0]) ?? 1.0) * 640;
+    final tdsMax = (double.tryParse(ecRange[1]) ?? 2.0) * 640;
     
     // Create parameters to pass to the Add Profile page
     final Map<String, dynamic> recommendationData = {
-      'crop_type': _suggestedCrop!,
+      'crop_type': cropName,
       'growth_stage': 'transplanting', // Default to transplanting stage
       'transplanting': {
         'temperature_range': {
-          'min': (temperature - tempRange).toStringAsFixed(1),
-          'max': (temperature + tempRange).toStringAsFixed(1),
+          'min': tempRange[0],
+          'max': tempRange[1],
         },
         'humidity_range': {
-          'min': (humidity - humidityRange).toStringAsFixed(1),
-          'max': (humidity + humidityRange).toStringAsFixed(1),
+          'min': humidityRange[0],
+          'max': humidityRange[1],
         },
         'ec_range': {
-          'min': (ec - ecRange).toStringAsFixed(2),
-          'max': (ec + ecRange).toStringAsFixed(2),
+          'min': ecRange[0],
+          'max': ecRange[1],
         },
         'ph_range': {
-          'min': (ph - phRange).toStringAsFixed(1),
-          'max': (ph + phRange).toStringAsFixed(1),
+          'min': phRange[0],
+          'max': phRange[1],
         },
         'tds_range': {
-          'min': (tds - tdsRange).toStringAsFixed(0),
-          'max': (tds + tdsRange).toStringAsFixed(0),
+          'min': tdsMin.toStringAsFixed(0),
+          'max': tdsMax.toStringAsFixed(0),
         },
       },
       'recommendation': _recommendation,
@@ -206,15 +277,22 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
   Widget _buildMobileLayout() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: _suggestedCrop == null
-          ? _buildInputForm()
-          : Column(
+      child: _errorMessage != null
+          ? Column(
               children: [
-                _buildResultCard(),
-                const SizedBox(height: 16),
+                _buildErrorCard(),
                 _buildHelpText(),
               ],
-            ),
+            )
+          : _suggestedCrop == null
+              ? _buildInputForm()
+              : Column(
+                  children: [
+                    _buildResultCard(),
+                    const SizedBox(height: 16),
+                    _buildHelpText(),
+                  ],
+                ),
     );
   }
 
@@ -224,15 +302,22 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
       child: Center(
         child: SizedBox(
           width: 600,
-          child: _suggestedCrop == null
-              ? _buildInputForm()
-              : Column(
+          child: _errorMessage != null
+              ? Column(
                   children: [
-                    _buildResultCard(),
-                    const SizedBox(height: 16),
+                    _buildErrorCard(),
                     _buildHelpText(),
                   ],
-                ),
+                )
+              : _suggestedCrop == null
+                  ? _buildInputForm()
+                  : Column(
+                      children: [
+                        _buildResultCard(),
+                        const SizedBox(height: 16),
+                        _buildHelpText(),
+                      ],
+                    ),
         ),
       ),
     );
@@ -244,9 +329,8 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
       child: Center(
         child: SizedBox(
           width: 1000,
-          child: _suggestedCrop == null
-              ? _buildInputForm()
-              : Row(
+          child: _errorMessage != null
+              ? Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Expanded(
@@ -258,14 +342,36 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
                       flex: 6,
                       child: Column(
                         children: [
-                          _buildResultCard(),
+                          _buildErrorCard(),
                           const SizedBox(height: 24),
                           _buildHelpText(),
                         ],
                       ),
                     ),
                   ],
-                ),
+                )
+              : _suggestedCrop == null
+                  ? _buildInputForm()
+                  : Row(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Expanded(
+                          flex: 5,
+                          child: _buildInputForm(),
+                        ),
+                        const SizedBox(width: 32),
+                        Expanded(
+                          flex: 6,
+                          child: Column(
+                            children: [
+                              _buildResultCard(),
+                              const SizedBox(height: 24),
+                              _buildHelpText(),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
         ),
       ),
     );
@@ -304,8 +410,8 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
                     label: 'Temperature (°C)',
                     hint: '22.0',
                     icon: Icons.thermostat_outlined,
-                    helperText: 'Optimal range: 18-28°C',
-                    validator: (value) => _validateInput(value, 'Temperature', min: 10, max: 40),
+                    helperText: 'Enter any temperature value',
+                    validator: (value) => _validateInput(value, 'Temperature'),
                   ),
                   
                   // Humidity input
@@ -314,38 +420,8 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
                     label: 'Humidity (%)',
                     hint: '65.0',
                     icon: Icons.water_outlined,
-                    helperText: 'Optimal range: 50-80%',
-                    validator: (value) => _validateInput(value, 'Humidity', min: 30, max: 90),
-                  ),
-                  
-                  // pH input
-                  _buildInputField(
-                    controller: _phController,
-                    label: 'pH Level',
-                    hint: '6.5',
-                    icon: Icons.science_outlined,
-                    helperText: 'Optimal range: 5.5-7.0',
-                    validator: (value) => _validateInput(value, 'pH Level', min: 4, max: 9),
-                  ),
-                  
-                  // EC input
-                  _buildInputField(
-                    controller: _ecController,
-                    label: 'EC Level (mS/cm)',
-                    hint: '1.8',
-                    icon: Icons.bolt_outlined,
-                    helperText: 'Electrical conductivity',
-                    validator: (value) => _validateInput(value, 'EC Level', min: 0.5, max: 3),
-                  ),
-                  
-                  // TDS input
-                  _buildInputField(
-                    controller: _tdsController,
-                    label: 'TDS (ppm)',
-                    hint: '900',
-                    icon: Icons.water_drop_outlined,
-                    helperText: 'Total dissolved solids',
-                    validator: (value) => _validateInput(value, 'TDS', min: 100, max: 2000),
+                    helperText: 'Enter any humidity value',
+                    validator: (value) => _validateInput(value, 'Humidity'),
                   ),
                 ],
               ),
@@ -419,7 +495,7 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
                       ),
                       SizedBox(height: 8),
                       Text(
-                        'Get crop recommendations based on your environmental conditions. The system will suggest the most suitable crops for your growing environment.',
+                        'Get crop recommendations based on your temperature and humidity values. The system will suggest the most suitable crops for your growing environment.',
                         style: TextStyle(fontSize: 15, color: AppColors.textSecondary),
                       ),
                     ],
@@ -534,6 +610,28 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
                     ),
                   ),
                 ],
+                
+                // Display all suggestions if available
+                if (_allSuggestions.isNotEmpty && _allSuggestions.length > 1) ...[
+                  const SizedBox(height: 24),
+                  const Divider(),
+                  const SizedBox(height: 16),
+                  const Text(
+                    'Other Suitable Crops',
+                    style: TextStyle(
+                      fontSize: 18,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.forest,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  // Skip the first suggestion as it's already shown above
+                  for (int i = 1; i < _allSuggestions.length; i++) ...[
+                    _buildSuggestionItem(_allSuggestions[i]),
+                    if (i < _allSuggestions.length - 1) const Divider(height: 24),
+                  ],
+                ],
+                
                 const SizedBox(height: 24),
                 isNarrow
                     ? Column(
@@ -587,6 +685,129 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
       ),
     );
   }
+  
+  Widget _buildErrorCard() {
+    return Card(
+      elevation: 4,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(18),
+      ),
+      margin: const EdgeInsets.only(bottom: 24),
+      child: Container(
+        decoration: BoxDecoration(
+          color: AppColors.error.withOpacity(0.1),
+          borderRadius: BorderRadius.circular(18),
+        ),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                children: [
+                  const Icon(Icons.error_outline, color: AppColors.error, size: 28),
+                  const SizedBox(width: 12),
+                  const Text(
+                    'No Suitable Crops Found',
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: AppColors.error,
+                    ),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                _errorMessage ?? 'No crops match the provided environmental parameters.',
+                style: const TextStyle(
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              const SizedBox(height: 24),
+              CustomButton(
+                text: 'Try Different Values',
+                onPressed: _resetForm,
+                backgroundColor: AppColors.leaf,
+                icon: Icons.refresh,
+                useGradient: true,
+                width: double.infinity,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+  
+  // Helper method to build individual suggestion items
+  Widget _buildSuggestionItem(Map<String, dynamic> suggestion) {
+    return Padding(
+      padding: const EdgeInsets.symmetric(vertical: 8.0),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Icons.eco_outlined, color: AppColors.leaf, size: 20),
+              const SizedBox(width: 8),
+              Text(
+                suggestion['crop'],
+                style: const TextStyle(
+                  fontSize: 18,
+                  fontWeight: FontWeight.w600,
+                  color: AppColors.forest,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Padding(
+            padding: const EdgeInsets.only(left: 28.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildRangeRow(Icons.thermostat_outlined, 'Temperature:', suggestion['temp_range']),
+                const SizedBox(height: 4),
+                _buildRangeRow(Icons.water_outlined, 'Humidity:', suggestion['humidity_range']),
+                const SizedBox(height: 4),
+                _buildRangeRow(Icons.science_outlined, 'pH:', suggestion['pH_range']),
+                const SizedBox(height: 4),
+                _buildRangeRow(Icons.bolt_outlined, 'EC:', suggestion['EC_range']),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+  
+  // Helper method to build range rows
+  Widget _buildRangeRow(IconData icon, String label, String range) {
+    return Row(
+      children: [
+        Icon(icon, size: 16, color: AppColors.textSecondary),
+        const SizedBox(width: 4),
+        Text(
+          label,
+          style: const TextStyle(
+            fontSize: 14,
+            color: AppColors.textSecondary,
+          ),
+        ),
+        const SizedBox(width: 4),
+        Text(
+          range,
+          style: const TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w500,
+            color: AppColors.forest,
+          ),
+        ),
+      ],
+    );
+  }
 
   Widget _buildHelpText() {
     return Card(
@@ -615,12 +836,12 @@ class _CropSuggestionPredictorPageState extends State<CropSuggestionPredictorPag
             ),
             const SizedBox(height: 8),
             Text(
-              'The crop suggestion system analyzes your environmental parameters to recommend the most suitable crops for your growing conditions. The recommendations are based on optimal growing ranges for various crops.',
+              'The crop suggestion system analyzes your temperature and humidity values to recommend the most suitable crops for your growing environment. The recommendations are based on optimal growing ranges for various crops.',
               style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
             ),
             const SizedBox(height: 8),
             Text(
-              'For best results, ensure your measurements are accurate and your growing environment is stable. Different crops have different requirements for temperature, humidity, pH, and nutrient levels.',
+              'For best results, ensure your measurements are accurate and your growing environment is stable. Once you select a crop, the system will also provide recommended pH and EC levels for optimal growth.',
               style: TextStyle(fontSize: 13, color: Colors.blue.shade900),
             ),
           ],

@@ -86,6 +86,17 @@ class _PerformanceResultsPageState extends State<PerformanceResultsPage> with Si
                   toolbarHeight: 50,
                   actions: [
                     IconButton(
+                      icon: const Icon(Icons.public, size: 20),
+                      tooltip: 'Global Leaderboard',
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/global-leaderboard',
+                          arguments: widget.userId,
+                        );
+                      },
+                    ),
+                    IconButton(
                       icon: const Icon(Icons.tune, size: 20),
                       tooltip: 'Configure Matrix',
                       onPressed: () {
@@ -121,6 +132,17 @@ class _PerformanceResultsPageState extends State<PerformanceResultsPage> with Si
                   foregroundColor: Colors.white,
                   elevation: 0,
                   actions: [
+                    IconButton(
+                      icon: const Icon(Icons.public),
+                      tooltip: 'Global Leaderboard',
+                      onPressed: () {
+                        Navigator.pushNamed(
+                          context,
+                          '/global-leaderboard',
+                          arguments: widget.userId,
+                        );
+                      },
+                    ),
                     IconButton(
                       icon: const Icon(Icons.tune),
                       tooltip: 'Configure Matrix',

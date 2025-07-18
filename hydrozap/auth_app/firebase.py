@@ -14,14 +14,14 @@ def initialize_firebase():
                 # Create credentials from environment variables
                 cred = credentials.Certificate(firebase_config)
                 firebase_admin.initialize_app(cred, {
-                    'databaseURL': 'https://hydroponics-4ef1b-default-rtdb.asia-southeast1.firebasedatabase.app'
+                    'databaseURL': 'https://hydroponics-6db60-default-rtdb.asia-southeast1.firebasedatabase.app'
                 })
                 print("Firebase initialized successfully with environment variables")
             else:
                 print("Firebase configuration not found in environment variables")
                 # Try initializing with application default credentials
                 firebase_admin.initialize_app(options={
-                    'databaseURL': 'https://hydroponics-4ef1b-default-rtdb.asia-southeast1.firebasedatabase.app'
+                    'databaseURL': 'https://hydroponics-6db60-default-rtdb.asia-southeast1.firebasedatabase.app'
                 })
                 print("Firebase initialized with application default credentials")
         except Exception as e:

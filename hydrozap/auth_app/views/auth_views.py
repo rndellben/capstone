@@ -103,13 +103,13 @@ class LoginView(APIView):
                 return Response({
                     "token": data['idToken'],  # Firebase token
                     "user": {
-                    "uid": uid,  
-                    "name": user_data.get("name"),
-                    "email": user_data.get("email"),
-                    "username": user_data.get("username"),
-                    "phone": user_data.get("phone")
-                }
-            }, status=status.HTTP_200_OK)
+                        "uid": uid,  
+                        "name": user_data.get("name"),
+                        "email": user_data.get("email"),
+                        "username": user_data.get("username"),
+                        "phone": user_data.get("phone")
+                    }
+                }, status=status.HTTP_200_OK)
             else:
                 return Response({"error": "Invalid credentials"}, status=status.HTTP_400_BAD_REQUEST)
 

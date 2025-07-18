@@ -99,10 +99,27 @@ class _HistoricalDataScreenState extends State<HistoricalDataScreen> {
         return;
       }
       
-      // Convert to FlSpot for the chart
+      // Determine interval based on selected time range
+      Duration interval;
+      switch (_selectedTimeRange) {
+        case 'Last 24 Hours':
+          interval = Duration(minutes: 5);
+          break;
+        case 'Last 7 Days':
+          interval = Duration(hours: 1);
+          break;
+        case 'Last 30 Days':
+          interval = Duration(hours: 6);
+          break;
+        default:
+          interval = Duration(minutes: 5);
+      }
+
+      final rawData = historicalData[_selectedSensorType]!;
+      final downsampled = downsampleData(rawData, interval);
+
       final dataPoints = <FlSpot>[];
-      
-      for (final point in historicalData[_selectedSensorType]!) {
+      for (final point in downsampled) {
         dataPoints.add(FlSpot(
           point['timestamp'].toDouble(),
           point['value'].toDouble(),
@@ -933,4 +950,42 @@ class _HistoricalDataScreenState extends State<HistoricalDataScreen> {
   double max(double a, double b) {
     return a > b ? a : b;
   }
+} 
+
+List<Map<String, dynamic>> downsampleData(
+  List<Map<String, dynamic>> rawData,
+  Duration interval,
+) {
+  if (rawData.isEmpty) return [];
+
+  List<Map<String, dynamic>> result = [];
+  int intervalMs = interval.inMilliseconds;
+  int currentBucketStart = rawData.first['timestamp'] ~/ intervalMs * intervalMs;
+  List<double> bucketValues = [];
+
+  for (var point in rawData) {
+    int ts = point['timestamp'];
+    double value = point['value'].toDouble();
+    int bucketStart = ts ~/ intervalMs * intervalMs;
+
+    if (bucketStart != currentBucketStart && bucketValues.isNotEmpty) {
+      // Add the previous bucket
+      result.add({
+        'timestamp': currentBucketStart,
+        'value': bucketValues.reduce((a, b) => a + b) / bucketValues.length,
+      });
+      // Start new bucket
+      currentBucketStart = bucketStart;
+      bucketValues = [];
+    }
+    bucketValues.add(value);
+  }
+  // Add the last bucket
+  if (bucketValues.isNotEmpty) {
+    result.add({
+      'timestamp': currentBucketStart,
+      'value': bucketValues.reduce((a, b) => a + b) / bucketValues.length,
+    });
+  }
+  return result;
 } 

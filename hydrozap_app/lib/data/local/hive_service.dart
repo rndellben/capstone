@@ -7,6 +7,7 @@ import 'package:hydrozap_app/core/models/alert_model.dart';
 import 'package:hydrozap_app/core/models/harvest_log_model.dart';
 import 'package:hydrozap_app/core/models/pending_sync_item.dart';
 import 'package:hydrozap_app/core/models/plant_profile_model.dart';
+import 'package:hydrozap_app/core/models/profile_change_log_model.dart';
 import 'package:hydrozap_app/core/utils/logger.dart';
 
 /// HiveService is responsible for all local storage operations using Hive
@@ -24,6 +25,7 @@ class HiveService {
   static const String harvestLogsBoxName = 'harvest_logs';
   static const String pendingSyncBoxName = 'pending_sync';
   static const String plantProfilesBoxName = 'plant_profiles';
+  static const String profileChangeLogsBoxName = 'profile_change_logs';
   
   // Initialization flag
   bool _isInitialized = false;
@@ -47,6 +49,7 @@ class HiveService {
     Hive.registerAdapter(AlertAdapter());
     Hive.registerAdapter(HarvestLogAdapter());
     Hive.registerAdapter(PendingSyncItemAdapter());
+    Hive.registerAdapter(ProfileChangeLogAdapter());
     
     // Open boxes
     await Hive.openBox<DeviceModel>(devicesBoxName);
@@ -56,6 +59,7 @@ class HiveService {
     await Hive.openBox<HarvestLog>(harvestLogsBoxName);
     await Hive.openBox<PendingSyncItem>(pendingSyncBoxName);
     await Hive.openBox(plantProfilesBoxName); // Use dynamic box for storing JSON strings
+    await Hive.openBox<ProfileChangeLog>(profileChangeLogsBoxName);
     
     _isInitialized = true;
   }
@@ -383,6 +387,52 @@ class HiveService {
       } catch (e) {
         logger.e('Error while deleting grow profiles box: $e');
       }
+    }
+  }
+
+  // PROFILE CHANGE LOG OPERATIONS
+  
+  /// Save a profile change log to local storage
+  Future<void> saveProfileChangeLog(ProfileChangeLog changeLog) async {
+    final box = Hive.box<ProfileChangeLog>(profileChangeLogsBoxName);
+    await box.put(changeLog.id, changeLog);
+  }
+  
+  /// Get a profile change log by ID from local storage
+  ProfileChangeLog? getProfileChangeLog(String logId) {
+    final box = Hive.box<ProfileChangeLog>(profileChangeLogsBoxName);
+    return box.get(logId);
+  }
+  
+  /// Get all profile change logs for a specific profile from local storage
+  List<ProfileChangeLog> getProfileChangeLogs(String profileId) {
+    final box = Hive.box<ProfileChangeLog>(profileChangeLogsBoxName);
+    return box.values
+        .where((log) => log.profileId == profileId)
+        .toList()
+        ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // Sort by timestamp descending
+  }
+  
+  /// Get all profile change logs from local storage
+  List<ProfileChangeLog> getAllProfileChangeLogs() {
+    final box = Hive.box<ProfileChangeLog>(profileChangeLogsBoxName);
+    return box.values.toList()
+      ..sort((a, b) => b.timestamp.compareTo(a.timestamp)); // Sort by timestamp descending
+  }
+  
+  /// Delete a profile change log from local storage
+  Future<void> deleteProfileChangeLog(String logId) async {
+    final box = Hive.box<ProfileChangeLog>(profileChangeLogsBoxName);
+    await box.delete(logId);
+  }
+  
+  /// Delete all profile change logs for a specific profile from local storage
+  Future<void> deleteProfileChangeLogs(String profileId) async {
+    final box = Hive.box<ProfileChangeLog>(profileChangeLogsBoxName);
+    final logsToDelete = box.values.where((log) => log.profileId == profileId);
+    
+    for (final log in logsToDelete) {
+      await box.delete(log.id);
     }
   }
 } 

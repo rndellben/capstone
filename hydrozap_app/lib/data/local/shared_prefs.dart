@@ -9,6 +9,7 @@ class SharedPrefs {
   static const String _lastSyncTimeKey = 'last_sync_time';
   static const String _profileImagePathKey = 'profile_image_path';
   static const String _offlineChangesKey = 'offline_changes';
+  static const String _userNameKey = 'user_name';
 
   // User ID methods
   static Future<void> setUserId(String userId) async {
@@ -22,6 +23,18 @@ class SharedPrefs {
     final userId = prefs.getString(_userIdKey);
     logger.d("Got user ID from preferences: $userId");
     return userId;
+  }
+
+  // User Name methods
+  static Future<void> setUserName(String userName) async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.setString(_userNameKey, userName);
+    logger.d("User name saved to preferences: $userName");
+  }
+
+  static Future<String?> getUserName() async {
+    final SharedPreferences prefs = await SharedPreferences.getInstance();
+    return prefs.getString(_userNameKey);
   }
 
   // Token methods
@@ -168,6 +181,7 @@ class SharedPrefs {
     await prefs.remove(_lastSyncTimeKey);
     await prefs.remove(_profileImagePathKey);
     await prefs.remove(_offlineChangesKey);
+    await prefs.remove(_userNameKey);
     logger.d("User data cleared from preferences");
   }
 

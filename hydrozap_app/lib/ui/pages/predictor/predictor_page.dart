@@ -33,7 +33,7 @@ class _PredictorPageState extends State<PredictorPage> {
           ? null
           : AppBar(
               title: const Text(
-                'Growth Parameter Predictor',
+                'Crop Suitability Analysis',
                 style: TextStyle(
                   fontWeight: FontWeight.bold,
                   color: Colors.white,
@@ -176,7 +176,7 @@ class _PredictorPageState extends State<PredictorPage> {
           crossAxisAlignment: CrossAxisAlignment.start,
                   children: const [
                     Text(
-                  'Growth Parameter Predictor',
+                  'Crop Suitability Analysis',
                   style: TextStyle(
                         fontSize: 22,
                     fontWeight: FontWeight.bold,
@@ -186,7 +186,7 @@ class _PredictorPageState extends State<PredictorPage> {
                 ),
                     SizedBox(height: 8),
                     Text(
-                      'Predict various plant growth parameters based on environmental conditions or plant metrics. Select a prediction type below.',
+                      'Explore which crops are suitable for your environment — or find the ideal growing conditions for your chosen crop. Select a category below to begin.',
                       style: TextStyle(fontSize: 15, color: Colors.white70),
                 ),
               ],
@@ -222,7 +222,7 @@ class _PredictorPageState extends State<PredictorPage> {
             ],
           ),
           child: const Text(
-            'Select a Prediction Type',
+            'Select a Analysis Type',
             style: TextStyle(
               fontSize: 18,
               fontWeight: FontWeight.bold,

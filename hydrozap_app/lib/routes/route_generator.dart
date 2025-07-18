@@ -22,8 +22,13 @@ import '../ui/pages/predictor/environment_recommendation_page.dart';
 import '../ui/pages/settings/settings_page.dart';
 import '../ui/pages/settings/account/account_settings_page.dart';
 import '../ui/pages/onboarding/onboarding_flow.dart';
+import '../ui/pages/change_logs/changes_log_page.dart';
 import 'app_routes.dart';
 import '../core/models/device_model.dart';
+import '../ui/pages/performance/global_leaderboard_page.dart';
+import '../ui/pages/performance/leaderboard_entry_detail_page.dart';
+import '../core/models/performance_matrix_model.dart'; // Contains LeaderboardEntry class
+import '../ui/pages/dosing_logs/dosing_logs_page.dart';
 
 class RouteGenerator {
   static Route<dynamic> generateRoute(RouteSettings settings) {
@@ -109,6 +114,19 @@ class RouteGenerator {
         return MaterialPageRoute(builder: (_) => const AccountSettingsPage());
       case AppRoutes.onboardingFlow:
         return MaterialPageRoute(builder: (_) => const OnboardingFlow());
+      case AppRoutes.changesLog:
+        return MaterialPageRoute(builder: (_) => const ChangesLogPage());
+      case AppRoutes.globalLeaderboard:
+        return MaterialPageRoute(
+          builder: (_) => GlobalLeaderboardPage(userId: settings.arguments as String),
+        );
+      case AppRoutes.leaderboardEntryDetail:
+        return MaterialPageRoute(
+          builder: (_) => LeaderboardEntryDetailPage(entry: settings.arguments as LeaderboardEntry),
+        );
+      case AppRoutes.dosingLogs:
+        final deviceId = settings.arguments as String;
+        return MaterialPageRoute(builder: (_) => DosingLogsPage(deviceId: deviceId));
       default:
         return _errorRoute();
     }

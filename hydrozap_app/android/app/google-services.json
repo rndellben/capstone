@@ -1,14 +1,13 @@
 {
     "project_info": {
-        "project_number": "142453978219",
-        "firebase_url": "https://hydroponics-4ef1b-default-rtdb.asia-southeast1.firebasedatabase.app",
-        "project_id": "hydroponics-4ef1b",
-        "storage_bucket": "hydroponics-4ef1b.firebasestorage.app"
+        "project_number": "944946321754",
+        "project_id": "hydroponics-6db60",
+        "storage_bucket": "hydroponics-6db60.firebasestorage.app"
     },
     "client": [
         {
             "client_info": {
-                "mobilesdk_app_id": "1:142453978219:android:af275eb9eb55c08497ad2e",
+                "mobilesdk_app_id": "1:944946321754:android:2d15ddc05d9980d7253b63",
                 "android_client_info": {
                     "package_name": "com.example.hydrozap_app"
                 }
@@ -16,7 +15,7 @@
             "oauth_client": [],
             "api_key": [
                 {
-                    "current_key": "AIzaSyBxJM379Nt7wS5uWvswsRl2-axGSvL0cTo"
+                    "current_key": "AIzaSyAyKKO7iE7vrTJU4CtUG3KDmNAgyZGguGc"
                 }
             ],
             "services": {

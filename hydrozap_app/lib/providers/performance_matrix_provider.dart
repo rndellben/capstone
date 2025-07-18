@@ -1,35 +1,34 @@
-import 'package:flutter/foundation.dart';
-import 'dart:math' show min, max;
+import 'package:flutter/material.dart';
+import 'dart:math';
 import '../core/models/performance_matrix_model.dart';
 import '../core/api/api_service.dart';
 
-class PerformanceMatrixProvider with ChangeNotifier {
-  PerformanceMatrix? _currentMatrix;
-  final List<HarvestResult> _harvestResults = [];
+class PerformanceMatrixProvider extends ChangeNotifier {
   final ApiService _apiService = ApiService();
   bool _isLoading = false;
+  PerformanceMatrix? _currentMatrix;
+  final List<HarvestResult> _harvestResults = [];
+  final List<LeaderboardEntry> _globalLeaderboard = [];
+  bool _isLoadingLeaderboard = false;
   
-  // Getter for the current matrix
+  // Getters
+  bool get isLoading => _isLoading;
+  bool get isLoadingLeaderboard => _isLoadingLeaderboard;
   PerformanceMatrix? get currentMatrix => _currentMatrix;
+  List<HarvestResult> get harvestResults => List.unmodifiable(_harvestResults);
+  List<LeaderboardEntry> get globalLeaderboard => List.unmodifiable(_globalLeaderboard);
   
-  // Getter for harvest results
-  List<HarvestResult> get harvestResults => _harvestResults;
-  
-  // Getter for top performers
+  // Get top performers (top 5 by score)
   List<HarvestResult> get topPerformers {
-    if (_harvestResults.isEmpty) return [];
-    
-    // Sort by total score descending
-    final sorted = List<HarvestResult>.from(_harvestResults)
-      ..sort((a, b) => (b.totalScore ?? 0).compareTo(a.totalScore ?? 0));
-    
-    // Return top 30% or at least 3 results
-    final topCount = max(3, (_harvestResults.length * 0.3).ceil());
-    return sorted.take(topCount).toList();
+    final sortedResults = List<HarvestResult>.from(_harvestResults);
+    sortedResults.sort((a, b) {
+      final scoreA = a.totalScore ?? 0;
+      final scoreB = b.totalScore ?? 0;
+      return scoreB.compareTo(scoreA);
+    });
+    return sortedResults.take(5).toList();
   }
 
-  bool get isLoading => _isLoading;
-  
   // Initialize with default matrix
   void initializeDefaultMatrix() {
     _currentMatrix = PerformanceMatrix(
@@ -383,5 +382,125 @@ class PerformanceMatrixProvider with ChangeNotifier {
       'result': result,
       'metricDetails': metricDetails,
     };
+  }
+
+  // Fetch global leaderboard data
+  Future<void> fetchGlobalLeaderboard() async {
+    try {
+      _isLoadingLeaderboard = true;
+      notifyListeners();
+      
+      final leaderboardData = await _apiService.getGlobalLeaderboard();
+     
+      
+      final newLeaderboard = <LeaderboardEntry>[];
+      
+      for (final entry in leaderboardData) {
+      
+        // Parse harvest date
+        DateTime harvestDate;
+        try {
+          harvestDate = DateTime.parse(entry['harvestDate']);
+        } catch (e) {
+          harvestDate = DateTime.now();
+          print('Error parsing harvest date: $e');
+        }
+        
+        // Parse performance metrics
+        Map<String, double> performanceMetrics = {};
+        if (entry['performanceMetrics'] != null) {
+          final metrics = entry['performanceMetrics'] as Map<String, dynamic>;
+          metrics.forEach((key, value) {
+            if (value is int) {
+              performanceMetrics[key] = value.toDouble();
+            } else if (value is double) {
+              performanceMetrics[key] = value;
+            }
+          });
+        }
+        
+        // Parse optimal conditions
+        Map<String, dynamic>? optimalConditions;
+        if (entry['optimalConditions'] != null) {
+          optimalConditions = Map<String, dynamic>.from(entry['optimalConditions']);
+        
+        }
+        
+        // Parse rank with proper type handling
+        int rank = 0;
+        if (entry['rank'] is int) {
+          rank = entry['rank'];
+        } else if (entry['rank'] is String) {
+          rank = int.tryParse(entry['rank']) ?? 0;
+        }
+        
+        // Parse rating with proper type handling
+        int rating = 0;
+        if (entry['rating'] is int) {
+          rating = entry['rating'];
+        } else if (entry['rating'] is String) {
+          rating = int.tryParse(entry['rating']) ?? 0;
+        }
+        
+        // Parse yield amount with proper type handling
+        double yieldAmount = 0.0;
+        if (entry['yieldAmount'] is double) {
+          yieldAmount = entry['yieldAmount'];
+        } else if (entry['yieldAmount'] is int) {
+          yieldAmount = (entry['yieldAmount'] as int).toDouble();
+        } else if (entry['yieldAmount'] is String) {
+          yieldAmount = double.tryParse(entry['yieldAmount']) ?? 0.0;
+        }
+        
+        // Parse score with proper type handling
+        double score = 0.0;
+        if (entry['score'] is double) {
+          score = entry['score'];
+        } else if (entry['score'] is int) {
+          score = (entry['score'] as int).toDouble();
+        } else if (entry['score'] is String) {
+          score = double.tryParse(entry['score']) ?? 0.0;
+        }
+        
+        // Parse growth duration with proper type handling
+        int growthDuration = 0;
+        if (entry['growthDuration'] is int) {
+          growthDuration = entry['growthDuration'];
+        } else if (entry['growthDuration'] is String) {
+          growthDuration = int.tryParse(entry['growthDuration']) ?? 0;
+        }
+        
+        newLeaderboard.add(LeaderboardEntry(
+          rank: rank,
+          logId: entry['logId'] ?? '',
+          userId: entry['userId'] ?? '',
+          cropName: entry['cropName'] ?? 'Unknown Crop',
+          growProfileId: entry['growProfileId'] ?? '',
+          growProfileName: entry['growProfileName'] ?? 'Custom Profile',
+          harvestDate: harvestDate,
+          yieldAmount: yieldAmount,
+          rating: rating,
+          score: score,
+          performanceMetrics: performanceMetrics,
+          growthDuration: growthDuration,
+          optimalConditions: optimalConditions,
+          remarks: entry['remarks'] ?? '', // <-- Add this line
+        ));
+      }
+      
+      // Sort by rank
+      newLeaderboard.sort((a, b) => a.rank.compareTo(b.rank));
+      
+      // Clear and add all items to the existing list
+      _globalLeaderboard.clear();
+      _globalLeaderboard.addAll(newLeaderboard);
+      
+      _isLoadingLeaderboard = false;
+      notifyListeners();
+    } catch (e) {
+      _isLoadingLeaderboard = false;
+      _globalLeaderboard.clear();
+      notifyListeners();
+    }
   }
 } 

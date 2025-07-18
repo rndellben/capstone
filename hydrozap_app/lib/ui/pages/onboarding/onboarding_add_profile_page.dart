@@ -28,6 +28,8 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
   bool _isControllerInitialized = false;
   final ScrollController _scrollController = ScrollController();
 
+  bool isMobile(BuildContext context) => MediaQuery.of(context).size.width < 600;
+
   @override
   void initState() {
     super.initState();
@@ -188,6 +190,8 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
   }
 
   Widget _buildCurrentStep() {
+    // Determine if mode selector should be shown
+    final bool showModeSelector = widget.recommendationData == null || widget.recommendationData?['force_simple_mode'] != true;
     switch (_controller.currentStep) {
       case GrowProfileStep.selectPlant:
         return PlantSelection(
@@ -215,7 +219,7 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Transplanting Stage',
+              _controller.currentStep.getTitleForMode(_controller.mode),
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -223,14 +227,17 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
-            ModeSelector(
-              currentMode: _controller.mode,
-              onModeChanged: (mode) {
-                setState(() {
-                  _controller.setMode(mode);
-                });
-              },
-            ),
+            if (showModeSelector)
+              ModeSelector(
+                currentMode: _controller.mode,
+                onModeChanged: (mode) {
+                  setState(() {
+                    _controller.setMode(mode);
+                  });
+                },
+              ),
+            if (!showModeSelector)
+              const SizedBox(height: 16),
             const SizedBox(height: 16),
             StageConditions(
               stage: 'Transplanting Stage',
@@ -268,9 +275,16 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.stone,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.025),
-                      minimumSize: Size(double.infinity, MediaQuery.of(context).size.height * 0.08),
-                      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile(context) ? 12 : MediaQuery.of(context).size.height * 0.025,
+                      ),
+                      minimumSize: Size(
+                        double.infinity,
+                        isMobile(context) ? 48 : MediaQuery.of(context).size.height * 0.08,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: isMobile(context) ? 16 : MediaQuery.of(context).size.height * 0.02,
+                      ),
                     ),
                   ),
                 ),
@@ -286,14 +300,21 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
                       );
                       setState(() {});
                     },
-                    icon: Icon(Icons.arrow_forward, size: MediaQuery.of(context).size.height * 0.025),
+                    icon: Icon(Icons.arrow_forward, size: isMobile(context) ? 20 : MediaQuery.of(context).size.height * 0.025),
                     label: const Text('Next'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.025),
-                      minimumSize: Size(double.infinity, MediaQuery.of(context).size.height * 0.08),
-                      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile(context) ? 12 : MediaQuery.of(context).size.height * 0.025,
+                      ),
+                      minimumSize: Size(
+                        double.infinity,
+                        isMobile(context) ? 48 : MediaQuery.of(context).size.height * 0.08,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: isMobile(context) ? 16 : MediaQuery.of(context).size.height * 0.02,
+                      ),
                     ),
                   ),
                 ),
@@ -307,7 +328,7 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Vegetative Stage',
+              _controller.currentStep.getTitleForMode(_controller.mode),
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -351,9 +372,16 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.stone,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.025),
-                      minimumSize: Size(double.infinity, MediaQuery.of(context).size.height * 0.08),
-                      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile(context) ? 12 : MediaQuery.of(context).size.height * 0.025,
+                      ),
+                      minimumSize: Size(
+                        double.infinity,
+                        isMobile(context) ? 48 : MediaQuery.of(context).size.height * 0.08,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: isMobile(context) ? 16 : MediaQuery.of(context).size.height * 0.02,
+                      ),
                     ),
                   ),
                 ),
@@ -369,14 +397,21 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
                       );
                       setState(() {});
                     },
-                    icon: Icon(Icons.arrow_forward, size: MediaQuery.of(context).size.height * 0.025),
+                    icon: Icon(Icons.arrow_forward, size: isMobile(context) ? 20 : MediaQuery.of(context).size.height * 0.025),
                     label: const Text('Next'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.025),
-                      minimumSize: Size(double.infinity, MediaQuery.of(context).size.height * 0.08),
-                      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile(context) ? 12 : MediaQuery.of(context).size.height * 0.025,
+                      ),
+                      minimumSize: Size(
+                        double.infinity,
+                        isMobile(context) ? 48 : MediaQuery.of(context).size.height * 0.08,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: isMobile(context) ? 16 : MediaQuery.of(context).size.height * 0.02,
+                      ),
                     ),
                   ),
                 ),
@@ -390,7 +425,7 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
           crossAxisAlignment: CrossAxisAlignment.stretch,
           children: [
             Text(
-              'Maturation Stage',
+              _controller.currentStep.getTitleForMode(_controller.mode),
               style: const TextStyle(
                 fontSize: 22,
                 fontWeight: FontWeight.bold,
@@ -434,9 +469,16 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.stone,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.025),
-                      minimumSize: Size(double.infinity, MediaQuery.of(context).size.height * 0.08),
-                      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile(context) ? 12 : MediaQuery.of(context).size.height * 0.025,
+                      ),
+                      minimumSize: Size(
+                        double.infinity,
+                        isMobile(context) ? 48 : MediaQuery.of(context).size.height * 0.08,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: isMobile(context) ? 16 : MediaQuery.of(context).size.height * 0.02,
+                      ),
                     ),
                   ),
                 ),
@@ -452,14 +494,21 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
                       );
                       setState(() {});
                     },
-                    icon: Icon(Icons.arrow_forward, size: MediaQuery.of(context).size.height * 0.025),
+                    icon: Icon(Icons.arrow_forward, size: isMobile(context) ? 20 : MediaQuery.of(context).size.height * 0.025),
                     label: const Text('Next'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
-                      padding: EdgeInsets.symmetric(vertical: MediaQuery.of(context).size.height * 0.025),
-                      minimumSize: Size(double.infinity, MediaQuery.of(context).size.height * 0.08),
-                      textStyle: TextStyle(fontSize: MediaQuery.of(context).size.height * 0.02),
+                      padding: EdgeInsets.symmetric(
+                        vertical: isMobile(context) ? 12 : MediaQuery.of(context).size.height * 0.025,
+                      ),
+                      minimumSize: Size(
+                        double.infinity,
+                        isMobile(context) ? 48 : MediaQuery.of(context).size.height * 0.08,
+                      ),
+                      textStyle: TextStyle(
+                        fontSize: isMobile(context) ? 16 : MediaQuery.of(context).size.height * 0.02,
+                      ),
                     ),
                   ),
                 ),
@@ -488,7 +537,7 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
               final success = await _controller.addProfile(context);
               if (success && mounted) {
                 _showCompletionDialog(_controller.isOfflineSubmission);
-                if (widget.onProfileAdded != null && _controller.selectedPlantProfile != null) {
+                if (widget.onProfileAdded != null) {
                   widget.onProfileAdded(_controller.selectedPlantProfile!.id);
                 }
               }
@@ -536,6 +585,7 @@ class _OnboardingAddProfilePageState extends State<OnboardingAddProfilePage> {
           maturationTDSMaxController: _controller.stageParamControllers['maturation']?['tds_range']?['max'] ?? TextEditingController(),
         );
     }
+    return Container(); // Fallback return
   }
 
   void _showCompletionDialog(bool isOffline) {

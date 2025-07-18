@@ -490,3 +490,82 @@ class HistoricalSensorDataView(APIView):
                 {"error": f"Failed to retrieve sensor data: {str(e)}"}, 
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
+
+class DosingLogDataView(APIView):
+    def get(self, request, device_id):
+        """
+        Retrieve dosing logs for a specific device with optional date filtering.
+        
+        URL Parameters:
+        - start_date: ISO format datetime string (optional)
+        - end_date: ISO format datetime string (optional)
+        
+        Returns:
+        - List of dosing log entries, each with log_id, timestamp, mode, type, volume_ml
+        """
+        try:
+            # Get query parameters
+            start_date_str = request.query_params.get('start_date')
+            end_date_str = request.query_params.get('end_date')
+            
+            # Parse date strings if provided
+            start_date = None
+            end_date = None
+            if start_date_str:
+                try:
+                    start_date = datetime.fromisoformat(start_date_str.replace('Z', '+00:00'))
+                except ValueError:
+                    return Response({"error": "Invalid start_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS.sss)"}, status=status.HTTP_400_BAD_REQUEST)
+            if end_date_str:
+                try:
+                    end_date = datetime.fromisoformat(end_date_str.replace('Z', '+00:00'))
+                except ValueError:
+                    return Response({"error": "Invalid end_date format. Use ISO format (YYYY-MM-DDTHH:MM:SS.sss)"}, status=status.HTTP_400_BAD_REQUEST)
+
+            # Get device data
+            device_ref = db.reference(f'devices/{device_id}')
+            device_data = device_ref.get()
+            if not device_data:
+                return Response({"error": f"Device with ID {device_id} not found"}, status=status.HTTP_404_NOT_FOUND)
+
+            # Get dosing_logs
+            dosing_logs = device_data.get('dosing_logs')
+            if not dosing_logs:
+                return Response({"error": "No dosing logs available for this device"}, status=status.HTTP_404_NOT_FOUND)
+
+            # Build list of logs, each as a dict with log_id and all log fields
+            logs_list = []
+            for log_id, log in dosing_logs.items():
+                if not isinstance(log, dict):
+                    continue
+                timestamp = log.get('timestamp')
+                if not timestamp:
+                    continue
+                try:
+                    log_time = datetime.fromisoformat(timestamp.replace('Z', '+00:00'))
+                except (ValueError, TypeError):
+                    continue
+                if start_date and log_time < start_date:
+                    continue
+                if end_date and log_time > end_date:
+                    continue
+                log_entry = {
+                    'log_id': log_id,
+                    'timestamp': timestamp,
+                    'mode': log.get('mode'),
+                    'type': log.get('type'),
+                    'volume_ml': log.get('volume_ml')
+                }
+                # Add any other fields present in the log
+                for k, v in log.items():
+                    if k not in log_entry:
+                        log_entry[k] = v
+                logs_list.append(log_entry)
+
+            # Sort logs by timestamp ascending
+            logs_list.sort(key=lambda x: x['timestamp'])
+
+            return Response({"dosing_logs": logs_list}, status=status.HTTP_200_OK)
+        except Exception as e:
+            print(f"Error retrieving dosing logs: {str(e)}")
+            return Response({"error": f"Failed to retrieve dosing logs: {str(e)}"}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)

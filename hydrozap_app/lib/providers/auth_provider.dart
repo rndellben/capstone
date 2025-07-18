@@ -42,6 +42,11 @@ class AuthProvider with ChangeNotifier {
           final userId = response['user']['uid'];
           await SharedPrefs.setUserId(userId);
           
+          // Save username if available
+          if (response['user']['username'] != null) {
+            await SharedPrefs.setUserName(response['user']['username']);
+          }
+          
           // Subscribe to user topics for push notifications
           await _subscribeToUserTopics(userId);
         }
@@ -92,6 +97,16 @@ class AuthProvider with ChangeNotifier {
       if (response != null && response['user'] != null && response['user']['uid'] != null) {
         final userId = response['user']['uid'];
         await SharedPrefs.setUserId(userId);
+        
+        // Save username if available
+        if (response['user']['username'] != null) {
+            await SharedPrefs.setUserName(response['user']['username']);
+        } else if (response['user']['email'] != null) {
+            // Use email as fallback for username
+            final email = response['user']['email'];
+            final username = email.split('@')[0]; // Use part before @ as username
+            await SharedPrefs.setUserName(username);
+        }
         
         // Subscribe to user topics for push notifications
         await _subscribeToUserTopics(userId);

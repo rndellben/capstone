@@ -31,6 +31,10 @@ class ApiEndpoints {
   static final String addGrowProfile = '$baseUrl/api/grow-profiles/';
   static final String updateGrowProfile = '$baseUrl/api/grow-profiles/';
   static final String deleteGrowProfile = '$baseUrl/api/grow-profiles/';
+  static String growProfileCsvDownload(String profileId) => '$baseUrl/api/grow-profiles/$profileId/download-csv/';
+  
+  // Profile Change Log endpoints
+  static final String profileChangeLogs = '$baseUrl/api/profile-change-logs/';
 
   // Grow endpoints
   static final String getGrows = '$baseUrl/api/grows/';
@@ -53,12 +57,15 @@ class ApiEndpoints {
   // Harvest logs
   static final String harvestLogs = '$baseUrl/api/harvest-logs/';
   static final String addHarvestLog = '$baseUrl/api/harvest-logs/';
+  static final String globalLeaderboard = '$baseUrl/api/global-leaderboard/';
 
   // Plant Profile
   static final String getPlantProfiles = '$baseUrl/api/plant-profiles/';
   static final String addPlantProfile = '$baseUrl/api/plant-profiles/';
   static final String updatePlantProfile = '$baseUrl/api/plant-profiles/';
   static final String deletePlantProfile = '$baseUrl/api/plant-profiles/';
+  static final String plantProfilesCsvUpload = '$baseUrl/api/plant-profiles/upload-csv/';
+  static String plantProfileCsvDownload(String identifier) => '$baseUrl/api/plant-profiles/$identifier/download-csv/';
 
   // Predictive model endpoints
   static final String predictTipburn = '$baseUrl/api/predict/tipburn/';
@@ -79,4 +86,7 @@ class ApiEndpoints {
 
   //Reports and analytics
   static final String generateReport = '$baseUrl/api/generate-report/';
+
+  // Dosing logs endpoint
+  static String dosingLogs(String deviceId) => '$baseUrl/api/devices/$deviceId/dosing-logs/';
 }

@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import '../core/api/api_service.dart';
 import '../core/models/plant_profile_model.dart';
@@ -201,6 +202,29 @@ class PlantProfileProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  Future<Map<String, dynamic>> uploadPlantProfilesCsv({
+    required String userId,
+    required File csvFile,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final result = await _apiService.uploadPlantProfilesCsv(
+        userId: userId,
+        csvFile: csvFile,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return {'error': _error};
     }
   }
 } 

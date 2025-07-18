@@ -259,15 +259,15 @@ class PerformanceMatrix {
   }
 }
 
+// Class to represent a harvest result with performance metrics
 class HarvestResult {
   final String id;
   final String harvestId;
   final String plantId;
   final DateTime harvestDate;
-  final Map<String, double> metricValues; // Maps metric ID to measured value
-  bool isTopPerformer;
-  Map<String, double>? normalizedScores;
+  final Map<String, double> metricValues;
   double? totalScore;
+  bool isTopPerformer = false;
   
   HarvestResult({
     required this.id,
@@ -275,9 +275,8 @@ class HarvestResult {
     required this.plantId,
     required this.harvestDate,
     required this.metricValues,
-    this.isTopPerformer = false,
-    this.normalizedScores,
     this.totalScore,
+    this.isTopPerformer = false,
   });
   
   HarvestResult copyWith({
@@ -287,7 +286,6 @@ class HarvestResult {
     DateTime? harvestDate,
     Map<String, double>? metricValues,
     bool? isTopPerformer,
-    Map<String, double>? normalizedScores,
     double? totalScore,
   }) {
     return HarvestResult(
@@ -297,7 +295,6 @@ class HarvestResult {
       harvestDate: harvestDate ?? this.harvestDate,
       metricValues: metricValues ?? Map.from(this.metricValues),
       isTopPerformer: isTopPerformer ?? this.isTopPerformer,
-      normalizedScores: normalizedScores ?? this.normalizedScores,
       totalScore: totalScore ?? this.totalScore,
     );
   }
@@ -311,7 +308,6 @@ class HarvestResult {
       'harvestDate': harvestDate.toIso8601String(),
       'metricValues': metricValues,
       'isTopPerformer': isTopPerformer,
-      'normalizedScores': normalizedScores,
       'totalScore': totalScore,
     };
   }
@@ -325,10 +321,121 @@ class HarvestResult {
       harvestDate: DateTime.parse(json['harvestDate']),
       metricValues: Map<String, double>.from(json['metricValues']),
       isTopPerformer: json['isTopPerformer'] ?? false,
-      normalizedScores: json['normalizedScores'] != null 
-          ? Map<String, double>.from(json['normalizedScores']) 
-          : null,
       totalScore: json['totalScore'],
+    );
+  }
+}
+
+// Class to represent a global leaderboard entry
+class LeaderboardEntry {
+  final int rank;
+  final String logId;
+  final String userId;
+  final String cropName;
+  final String growProfileId;
+  final String growProfileName;
+  final DateTime harvestDate;
+  final double yieldAmount;
+  final int rating;
+  final double score;
+  final Map<String, double> performanceMetrics;
+  
+  // Additional fields for detailed view
+  final String growerName;
+  final int growthDuration;
+  final String? remarks;
+  final double averageTemperature;
+  final double averageHumidity;
+  final double averagePh;
+  final double averageEc;
+  final int lightHours;
+  final double yieldScore;
+  final double qualityScore;
+  final double efficiencyScore;
+  final double consistencyScore;
+  
+  // Optimal growing conditions from backend
+  final Map<String, dynamic>? optimalConditions;
+  
+  LeaderboardEntry({
+    required this.rank,
+    required this.logId,
+    required this.userId,
+    required this.cropName,
+    required this.growProfileId,
+    required this.growProfileName,
+    required this.harvestDate,
+    required this.yieldAmount,
+    required this.rating,
+    required this.score,
+    required this.performanceMetrics,
+    this.growerName = 'Anonymous',
+    this.growthDuration = 0,
+    this.remarks,
+    this.averageTemperature = 0.0,
+    this.averageHumidity = 0.0,
+    this.averagePh = 0.0,
+    this.averageEc = 0.0,
+    this.lightHours = 0,
+    this.yieldScore = 0.0,
+    this.qualityScore = 0.0,
+    this.efficiencyScore = 0.0,
+    this.consistencyScore = 0.0,
+    this.optimalConditions,
+  });
+  
+  // Create a copy with optional new values
+  LeaderboardEntry copyWith({
+    int? rank,
+    String? logId,
+    String? userId,
+    String? cropName,
+    String? growProfileId,
+    String? growProfileName,
+    DateTime? harvestDate,
+    double? yieldAmount,
+    int? rating,
+    double? score,
+    Map<String, double>? performanceMetrics,
+    String? growerName,
+    int? growthDuration,
+    String? remarks,
+    double? averageTemperature,
+    double? averageHumidity,
+    double? averagePh,
+    double? averageEc,
+    int? lightHours,
+    double? yieldScore,
+    double? qualityScore,
+    double? efficiencyScore,
+    double? consistencyScore,
+    Map<String, dynamic>? optimalConditions,
+  }) {
+    return LeaderboardEntry(
+      rank: rank ?? this.rank,
+      logId: logId ?? this.logId,
+      userId: userId ?? this.userId,
+      cropName: cropName ?? this.cropName,
+      growProfileId: growProfileId ?? this.growProfileId,
+      growProfileName: growProfileName ?? this.growProfileName,
+      harvestDate: harvestDate ?? this.harvestDate,
+      yieldAmount: yieldAmount ?? this.yieldAmount,
+      rating: rating ?? this.rating,
+      score: score ?? this.score,
+      performanceMetrics: performanceMetrics ?? Map.from(this.performanceMetrics),
+      growerName: growerName ?? this.growerName,
+      growthDuration: growthDuration ?? this.growthDuration,
+      remarks: remarks ?? this.remarks,
+      averageTemperature: averageTemperature ?? this.averageTemperature,
+      averageHumidity: averageHumidity ?? this.averageHumidity,
+      averagePh: averagePh ?? this.averagePh,
+      averageEc: averageEc ?? this.averageEc,
+      lightHours: lightHours ?? this.lightHours,
+      yieldScore: yieldScore ?? this.yieldScore,
+      qualityScore: qualityScore ?? this.qualityScore,
+      efficiencyScore: efficiencyScore ?? this.efficiencyScore,
+      consistencyScore: consistencyScore ?? this.consistencyScore,
+      optimalConditions: optimalConditions ?? this.optimalConditions,
     );
   }
 } 

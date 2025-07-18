@@ -186,12 +186,12 @@ EMAIL_PORT = 587
 EMAIL_HOST_USER = os.getenv('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = os.getenv('EMAIL_HOST_PASSWORD')  # Use App Password, not your Gmail password
 EMAIL_USE_TLS = True
-DEFAULT_FROM_EMAIL = 'noreply@hydroponics-1bab7.firebaseapp.com'
+DEFAULT_FROM_EMAIL = 'noreply@hydroponics-6db60.firebaseapp.com'
 
 # Firebase Configuration using Environment Variables
 FIREBASE_CONFIG = {
     "type": os.getenv('FIREBASE_TYPE', 'service_account'),
-    "project_id": os.getenv('FIREBASE_PROJECT_ID', 'hydroponics-1bab7'),
+    "project_id": os.getenv('FIREBASE_PROJECT_ID', 'hydroponics-6db60'),
     "private_key_id": os.getenv('FIREBASE_PRIVATE_KEY_ID'),
     "private_key": os.getenv('FIREBASE_PRIVATE_KEY').replace('\\n', '\n') if os.getenv('FIREBASE_PRIVATE_KEY') else None,
     "client_email": os.getenv('FIREBASE_CLIENT_EMAIL'),

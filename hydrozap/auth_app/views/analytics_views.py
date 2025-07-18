@@ -6,6 +6,8 @@ import joblib
 import os
 import numpy as np
 import logging
+from django.conf import settings
+from ..utils.crop_suggester import suggest_crops_by_env
 
 logger = logging.getLogger(__name__)
 
@@ -126,35 +128,63 @@ class LeafCountPredictorView(APIView):
 class CropSuggestionView(APIView):
     def post(self, request):
         try:
-            data = request.data
-            feature_values = [
-                data.get("temperature"),
-                data.get("humidity"),
-                data.get("ph"),
-                data.get("ec"),
-                data.get("tds")
-            ]
-
-            if None in feature_values:
-                return Response({"error": "Missing input values"}, status=400)
-
-            # Define the feature column names (must match the training data)
-            feature_names = ["temperature_avg", "humidity_avg", "pH_avg", "EC_avg", "TDS_avg"]
-            df = pd.DataFrame([feature_values], columns=feature_names)
-
-            prediction = suggested_crop_model.predict(df)[0]
-            predicted_crop = label_encoder.inverse_transform([prediction])[0]
-
-            # Add a friendly recommendation message
-            recommendation_message = f"Based on your current environmental conditions, we recommend growing {predicted_crop} for optimal results."
-
-            return Response({
-                "suggested_crop": predicted_crop,
-                "recommendation": recommendation_message
-            }, status=200)
-
+            # Get environmental parameters from request
+            temperature = request.data.get('temperature')
+            humidity = request.data.get('humidity')
+            
+            # Validate inputs
+            if temperature is None or humidity is None:
+                return Response(
+                    {"error": "Temperature and humidity are required parameters"},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # Convert to appropriate types
+            temperature = float(temperature)
+            humidity = float(humidity)
+            
+            # Get crop suggestions using the crop_suggester utility
+            suggestions = suggest_crops_by_env(temperature, humidity)
+            
+            if isinstance(suggestions, str):
+                # If it's a string, it's an error message
+                return Response(
+                    {"error": suggestions},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+            
+            # If we have suggestions
+            if suggestions and len(suggestions) > 0:
+                # Get the top suggestion
+                top_suggestion = suggestions[0]
+                crop_name = top_suggestion['crop']
+                
+                # Create a recommendation message with standard ASCII dash
+                recommendation = (
+                    f"{crop_name} is recommended for your environment. "
+                    f"It grows best in temperatures between {top_suggestion['temp_range']} "
+                    f"and humidity levels between {top_suggestion['humidity_range']}. "
+                    f"Maintain pH between {top_suggestion['pH_range']} and "
+                    f"EC between {top_suggestion['EC_range']}."
+                )
+                
+                # Return the response with all suggestions
+                return Response({
+                    "suggested_crop": crop_name,
+                    "recommendation": recommendation,
+                    "all_suggestions": suggestions
+                }, status=status.HTTP_200_OK)
+            else:
+                return Response(
+                    {"error": "No suitable crops found for the given parameters"},
+                    status=status.HTTP_404_NOT_FOUND
+                )
+                
         except Exception as e:
-            return Response({"error": str(e)}, status=500)
+            return Response(
+                {"error": str(e)},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
 class EnvironmentRecommendationView(APIView):
     def post(self, request):
         try:

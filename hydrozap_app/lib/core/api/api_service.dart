@@ -14,6 +14,8 @@ import 'dart:io';
 import 'dart:typed_data';
 import '../../../data/local/shared_prefs.dart';
 import '../utils/logger.dart';
+import '../../core/models/profile_change_log_model.dart';
+import 'package:open_file/open_file.dart';
 
 class ApiService {
   /// ✅ Register a new user
@@ -647,6 +649,26 @@ class ApiService {
     }
   }
   
+  // Get global leaderboard data
+  Future<List<dynamic>> getGlobalLeaderboard() async {
+    try {
+      final response = await http.get(
+        Uri.parse(ApiEndpoints.globalLeaderboard),
+        headers: await _getHeaders(),
+      );
+      
+      if (response.statusCode == 200) {
+        final data = json.decode(response.body);
+        return data['leaderboard'] ?? [];
+      } else {
+        throw Exception('Failed to load global leaderboard: ${response.statusCode}');
+      }
+    } catch (e) {
+      print('Error getting global leaderboard: $e');
+      return [];
+    }
+  }
+  
   // Add a harvest log
   Future<Map<String, dynamic>> addHarvestLog(String deviceId, Map<String, dynamic> logData) async {
     try {
@@ -742,6 +764,81 @@ class ApiService {
     } catch (e) {
       print("Error updating plant profile: $e");
       return false;
+    }
+  }
+   /// Upload plant profiles via CSV
+  Future<Map<String, dynamic>> uploadPlantProfilesCsv({
+    required String userId,
+    required File csvFile,
+  }) async {
+    final uri = Uri.parse(ApiEndpoints.plantProfilesCsvUpload);
+    final request = http.MultipartRequest('POST', uri);
+    request.fields['user_id'] = userId;
+    request.files.add(await http.MultipartFile.fromPath('file', csvFile.path));
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {
+          'error': 'Failed to upload CSV',
+          'statusCode': response.statusCode,
+          'body': response.body
+        };
+      }
+    } catch (e) {
+      return {
+        'error': 'Exception occurred',
+        'message': e.toString(),
+      };
+    }
+  }
+
+  /// Download plant profile CSV by identifier and save to device
+  Future<String?> downloadPlantProfileCsv(String identifier) async {
+    try {
+      final url = ApiEndpoints.plantProfileCsvDownload(identifier);
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        // Get the Downloads directory
+        final directory = await getDownloadsDirectory();
+        if (directory == null) throw Exception('Downloads directory not found');
+        final filePath = '${directory.path}/plant_profile_$identifier.csv';
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+        return filePath;
+      } else {
+        logger.e('Failed to download CSV: \\${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      logger.e('Error downloading plant profile CSV: $e');
+      return null;
+    }
+  }
+
+  /// Download grow profile CSV by profile_id, save to temp directory, and open it
+  Future<String?> downloadGrowProfileCsv(String profileId) async {
+    try {
+      final url = ApiEndpoints.growProfileCsvDownload(profileId);
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        // Get temporary directory (to match PDF report behavior)
+        final directory = await getTemporaryDirectory();
+        final filePath = '${directory.path}/grow_profile_$profileId.csv';
+        final file = File(filePath);
+        await file.writeAsBytes(response.bodyBytes);
+        await OpenFile.open(filePath);
+        return filePath;
+      } else {
+        logger.e('Failed to download grow profile CSV: \\${response.statusCode}');
+        return null;
+      }
+    } catch (e) {
+      logger.e('Error downloading grow profile CSV: $e');
+      return null;
     }
   }
 
@@ -844,7 +941,7 @@ class ApiService {
     }
   }
 
-  Future<Map<String, String>?> predictCropSuggestion({
+  Future<Map<String, dynamic>?> predictCropSuggestion({
     required double temperature,
     required double humidity,
     required double ph,
@@ -869,12 +966,25 @@ class ApiService {
         return {
           'suggested_crop': data['suggested_crop'] as String,
           'recommendation': data['recommendation'] as String,
+          'all_suggestions': data['all_suggestions'] ?? [], // Add all_suggestions to the response
         };
       } else {
-        return null;
+        // Handle error response
+        try {
+          final errorData = jsonDecode(response.body);
+          return {
+            'error': errorData['error'] ?? 'Failed to get crop suggestion',
+          };
+        } catch (e) {
+          return {
+            'error': 'Failed to get crop suggestion: ${response.statusCode}',
+          };
+        }
       }
     } catch (e) {
-      return null;
+      return {
+        'error': 'Error connecting to server: $e',
+      };
     }
   }
 
@@ -1462,6 +1572,104 @@ class ApiService {
     } catch (e) {
       logger.e('Error getting grow profile: $e');
       return null;
+    }
+  }
+
+  /// Fetch grow profile by ID
+  Future<Map<String, dynamic>?> fetchGrowProfileById(String growProfileId) async {
+    try {
+      final url = ApiEndpoints.getGrowProfiles + '$growProfileId/';
+      final response = await http.get(Uri.parse(url));
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data is Map<String, dynamic> && data.containsKey('grow_profile')) {
+          return data['grow_profile'] as Map<String, dynamic>;
+        } else if (data is Map<String, dynamic>) {
+          return data;
+        }
+      }
+      return null;
+    } catch (e) {
+      logger.e('Error fetching grow profile: $e');
+      return null;
+    }
+  }
+
+  /// Fetch profile change logs for a specific profile
+  Future<List<ProfileChangeLog>> getProfileChangeLogs(String profileId, String userId) async {
+    try {
+      final Uri url;
+      if (profileId.isNotEmpty) {
+        url = Uri.parse('${ApiEndpoints.profileChangeLogs}$profileId/?user_id=$userId');
+      } else {
+        url = Uri.parse('${ApiEndpoints.profileChangeLogs}?user_id=$userId');
+      }
+      
+      final response = await http.get(
+        url,
+        headers: await _getHeaders(),
+      );
+
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        final List<dynamic> logs = data['change_logs'];
+        
+        return logs.map((log) => ProfileChangeLog.fromMap(log['id'], log)).toList();
+      } else {
+        print('Error fetching profile change logs: ${response.statusCode}');
+        return [];
+      }
+    } catch (e) {
+      print('Exception fetching profile change logs: $e');
+      return [];
+    }
+  }
+
+  /// Create a profile change log
+  Future<bool> createProfileChangeLog(Map<String, dynamic> logData) async {
+    try {
+      final response = await http.post(
+        Uri.parse(ApiEndpoints.profileChangeLogs),
+        headers: await _getHeaders(),
+        body: jsonEncode(logData),
+      );
+
+      return response.statusCode == 201;
+    } catch (e) {
+      print('Exception creating profile change log: $e');
+      return false;
+    }
+  }
+
+  /// Get dosing logs for a device
+  Future<List<Map<String, dynamic>>> getDosingLogs(
+    String deviceId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      // Build query parameters if dates are provided
+      final queryParams = <String, String>{};
+      if (startDate != null) {
+        queryParams['start_date'] = startDate.toIso8601String();
+      }
+      if (endDate != null) {
+        queryParams['end_date'] = endDate.toIso8601String();
+      }
+      final uri = Uri.parse(ApiEndpoints.dosingLogs(deviceId)).replace(queryParameters: queryParams.isNotEmpty ? queryParams : null);
+      final response = await http.get(uri);
+      if (response.statusCode == 200) {
+        final data = jsonDecode(response.body);
+        if (data['dosing_logs'] != null && data['dosing_logs'] is List) {
+          // Return as a list of maps
+          return List<Map<String, dynamic>>.from(data['dosing_logs']);
+        }
+        return [];
+      } else {
+        return [];
+      }
+    } catch (e) {
+      return [];
     }
   }
 }

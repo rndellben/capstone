@@ -34,13 +34,19 @@ from auth_app.views import (
     SensorDataView,
     ActuatorDataView,
     HistoricalSensorDataView,
+    DosingLogDataView,
     
     # Plant views
     PlantProfileView,
+    PlantProfileCSVUploadView,
     GrowProfileView,
     GrowView,
     HarvestLogView,
     HarvestReadinessView,
+    ProfileChangeLogView,
+    GlobalLeaderboardView,
+    PlantProfileCSVDownloadView,
+    GrowProfileCSVDownloadView,
     
     # Alert views
     AlertView,
@@ -94,15 +100,23 @@ urlpatterns = [
     path('api/devices/<str:device_id>/', DeviceView.as_view()),
     path('api/devices/<str:device_id>/check-delete/', DeviceView.as_view()),
     path('api/devices/<str:device_id>/current_thresholds/', DeviceView.as_view()),
+    path('api/devices/<str:device_id>/dosing-logs/', DosingLogDataView.as_view()),
     path('api/device-count/', DeviceCountView.as_view()),
     
     # Plant profile endpoints
     path('api/plant-profiles/', PlantProfileView.as_view()),
+    path('api/plant-profiles/upload-csv/', PlantProfileCSVUploadView.as_view()),
     path('api/plant-profiles/<str:identifier>/', PlantProfileView.as_view()),
+    path('api/plant-profiles/<str:identifier>/download-csv/', PlantProfileCSVDownloadView.as_view()),
     
     # Grow profile endpoints
     path('api/grow-profiles/', GrowProfileView.as_view()),
     path('api/grow-profiles/<str:profile_id>/', GrowProfileView.as_view()),
+    path('api/grow-profiles/<str:profile_id>/download-csv/', GrowProfileCSVDownloadView.as_view()),
+    
+    # Profile change log endpoints
+    path('api/profile-change-logs/', ProfileChangeLogView.as_view()),
+    path('api/profile-change-logs/<str:profile_id>/', ProfileChangeLogView.as_view()),
     
     # Grow endpoints
     path('api/grows/', GrowView.as_view()),
@@ -121,6 +135,9 @@ urlpatterns = [
     # Harvest logs
     path('api/harvest-logs/<str:device_id>/', HarvestLogView.as_view()),
     path('api/harvest-logs/<str:device_id>/<str:grow_id>/', HarvestLogView.as_view()),
+    
+    # Global leaderboard
+    path('api/global-leaderboard/', GlobalLeaderboardView.as_view()),
     
     # Machine learning prediction endpoints
     path('api/predict/tipburn/', TipburnPredictorView.as_view()),

@@ -88,13 +88,13 @@ class PushNotificationService {
         try {
           await Firebase.initializeApp(
             options: FirebaseOptions(
-              apiKey: "AIzaSyBxr6fiKPQMKtRPKmynPZP9JO54tid9jP0",
-              appId: "1:246984811775:web:9cd5bed9ff95b85f39c754",
-              messagingSenderId: "246984811775",
-              projectId: "hydroponics-1bab7",
-              authDomain: "hydroponics-1bab7.firebaseapp.com",
-              databaseURL: "https://hydroponics-1bab7-default-rtdb.firebaseio.com",
-              storageBucket: "hydroponics-1bab7.appspot.com",
+              apiKey: "AIzaSyCbVuee1pM0qrOrR7xjUqViCindM6lW2bI",
+              appId: "1:101499311847054789858:web:9cd5bed9ff95b85f39c754",
+              messagingSenderId: "101499311847054789858",
+              projectId: "hydroponics-6db60",
+              authDomain: "hydroponics-6db60.firebaseapp.com",
+              databaseURL: "https://hydroponics-6db60-default-rtdb.asia-southeast1.firebasedatabase.app",
+              storageBucket: "hydroponics-6db60.appspot.com",
             ),
           );
         } catch (initError) {

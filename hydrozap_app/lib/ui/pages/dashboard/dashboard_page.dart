@@ -93,7 +93,6 @@ class AlertThresholds {
   // Factory method to create thresholds from grow profile
   factory AlertThresholds.fromGrowProfile(GrowProfile? profile, {String? growStage, DateTime? startDate, int? totalDuration}) {
     if (profile == null || profile.optimalConditions == null) {
-      logger.d('Using default alert thresholds - null profile or conditions');
       return AlertThresholds._(); // Use defaults
     }
 
@@ -109,7 +108,6 @@ class AlertThresholds {
         // Use a fixed reference time for consistent stage calculation
         final referenceTime = DateTime.now();
         currentStage = _determineCurrentStage(startDate, totalDuration, referenceTime);
-        logger.d('Calculated growth stage: $currentStage (progress: ${(referenceTime.difference(startDate).inDays / totalDuration).clamp(0.0, 1.0)})');
       }
       
       final stageConditions = AlertThresholds._getCurrentStageConditions(conditions, currentStage);
@@ -232,13 +230,11 @@ class _DashboardPageState extends State<DashboardPage> {
       // Get associated profile
       final profileId = activeGrow.first.profileId;
       if (profileId.isEmpty) {
-        logger.w('Warning: Active grow for device $deviceId has empty profileId');
         return null;
       }
       
       final profiles = profileProvider.growProfiles;
       if (profiles.isEmpty) {
-        logger.w('Warning: No grow profiles loaded');
         return null;
       }
       
@@ -246,7 +242,6 @@ class _DashboardPageState extends State<DashboardPage> {
         final profile = profiles.firstWhere((profile) => profile.id == profileId);
         return profile;
       } catch (e) {
-        logger.w('Warning: Could not find profile with ID $profileId for device $deviceId: $e');
         return null;
       }
     } catch (e) {
@@ -271,7 +266,6 @@ class _DashboardPageState extends State<DashboardPage> {
           
           // Skip alert generation if no active grow is found
           if (activeGrow.isEmpty) {
-            logger.d('No active grow found for device ${device.id}, skipping alerts');
             continue;
           }
           
@@ -302,7 +296,6 @@ class _DashboardPageState extends State<DashboardPage> {
           
           final latestReadings = device.getLatestSensorReadings();
           if (latestReadings.isEmpty) {
-            logger.d('No sensor readings for device ${device.id}');
             continue;
           }
           
@@ -460,11 +453,9 @@ class _DashboardPageState extends State<DashboardPage> {
           }
         } catch (deviceError) {
           // Catch any errors for a single device but allow other devices to be processed
-          logger.e('Error processing alerts for device ${device.id}: $deviceError');
         }
       }
     } catch (e) {
-      logger.e('Error in _handleDeviceAlerts: $e');
     }
   }
 

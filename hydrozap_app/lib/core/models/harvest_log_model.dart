@@ -35,6 +35,9 @@ class HarvestLog {
   @HiveField(9)
   final DateTime lastUpdated;
 
+  @HiveField(10)
+  final String remarks;
+
   HarvestLog({
     required this.logId,
     required this.deviceId,
@@ -46,6 +49,7 @@ class HarvestLog {
     this.performanceMetrics = const {},
     this.synced = true,
     DateTime? lastUpdated,
+    this.remarks = '',
   }) : lastUpdated = lastUpdated ?? DateTime.now();
 
   Map<String, dynamic> toJson() {
@@ -59,6 +63,7 @@ class HarvestLog {
       'rating': rating,
       'performanceMetrics': performanceMetrics,
       'last_updated': lastUpdated.toIso8601String(),
+      'remarks': remarks,
     };
   }
 
@@ -76,6 +81,7 @@ class HarvestLog {
       lastUpdated: json['last_updated'] != null 
           ? DateTime.parse(json['last_updated']) 
           : DateTime.now(),
+      remarks: json['remarks'] ?? '',
     );
   }
 
@@ -90,6 +96,7 @@ class HarvestLog {
     Map<String, double>? performanceMetrics,
     bool? synced,
     DateTime? lastUpdated,
+    String? remarks,
   }) {
     return HarvestLog(
       logId: logId ?? this.logId,
@@ -102,6 +109,7 @@ class HarvestLog {
       performanceMetrics: performanceMetrics ?? this.performanceMetrics,
       synced: synced ?? this.synced,
       lastUpdated: lastUpdated ?? this.lastUpdated,
+      remarks: remarks ?? this.remarks,
     );
   }
 }

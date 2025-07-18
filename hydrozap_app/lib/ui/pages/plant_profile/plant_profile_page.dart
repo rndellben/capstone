@@ -23,6 +23,8 @@ class PlantProfilePage extends StatefulWidget {
 
 class _PlantProfilePageState extends State<PlantProfilePage> {
   String _mode = 'simple';  // Add mode state
+  String _searchText = '';  // Add search text state
+  final TextEditingController _searchController = TextEditingController();
 
   @override
   void initState() {
@@ -30,6 +32,12 @@ class _PlantProfilePageState extends State<PlantProfilePage> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       context.read<PlantProfileProvider>().fetchPlantProfiles(userId: widget.userId);
     });
+  }
+
+  @override
+  void dispose() {
+    _searchController.dispose();
+    super.dispose();
   }
 
   void _onModeChanged(String newMode) {
@@ -107,7 +115,14 @@ class _PlantProfilePageState extends State<PlantProfilePage> {
               return _buildEmptyState();
             }
 
-            return _buildProfileList(provider);
+            return Column(
+              children: [
+                _buildSearchBar(),
+                Expanded(
+                  child: _buildProfileList(provider),
+                ),
+              ],
+            );
           },
         ),
         floatingActionButton: SizedBox(
@@ -123,6 +138,50 @@ class _PlantProfilePageState extends State<PlantProfilePage> {
             onPressed: () => _showAddProfileDialog(context),
             child: const Icon(Icons.add, size: 34),
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildSearchBar() {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(16, 16, 16, 8),
+      child: Container(
+        decoration: BoxDecoration(
+          color: Colors.white,
+          borderRadius: BorderRadius.circular(16),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withOpacity(0.05),
+              blurRadius: 10,
+              offset: const Offset(0, 5),
+            ),
+          ],
+        ),
+        child: TextField(
+          controller: _searchController,
+          decoration: InputDecoration(
+            hintText: 'Search plant profiles...',
+            prefixIcon: const Icon(Icons.search, color: AppColors.leaf),
+            suffixIcon: _searchText.isNotEmpty
+                ? IconButton(
+                    icon: const Icon(Icons.clear, color: AppColors.leaf),
+                    onPressed: () {
+                      setState(() {
+                        _searchController.clear();
+                        _searchText = '';
+                      });
+                    },
+                  )
+                : null,
+            border: InputBorder.none,
+            contentPadding: const EdgeInsets.symmetric(vertical: 15),
+          ),
+          onChanged: (value) {
+            setState(() {
+              _searchText = value.trim();
+            });
+          },
         ),
       ),
     );
@@ -190,14 +249,56 @@ class _PlantProfilePageState extends State<PlantProfilePage> {
   }
 
   Widget _buildProfileList(PlantProfileProvider provider) {
-    // Filter profiles based on mode
+    // Filter profiles based on mode and search text
     final filteredProfiles = provider.plantProfiles.where((profile) {
+      // Mode filter
+      bool modeMatch = true;
       if (_mode == 'simple') {
-        return profile.mode == 'simple';
-      } else {
-        return true; // Show all profiles in advanced mode
+        modeMatch = profile.mode == 'simple';
       }
+      
+      // Search filter
+      bool searchMatch = true;
+      if (_searchText.isNotEmpty) {
+        searchMatch = profile.name.toLowerCase().contains(_searchText.toLowerCase()) ||
+                     (profile.notes.isNotEmpty && profile.notes.toLowerCase().contains(_searchText.toLowerCase()));
+      }
+      
+      return modeMatch && searchMatch;
     }).toList();
+
+    if (filteredProfiles.isEmpty && _searchText.isNotEmpty) {
+      return Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            const Icon(
+              Icons.search_off,
+              size: 64,
+              color: AppColors.leaf,
+            ),
+            const SizedBox(height: 16),
+            Text(
+              'No profiles match "$_searchText"',
+              style: const TextStyle(
+                fontSize: 18,
+                color: AppColors.textSecondary,
+              ),
+            ),
+            const SizedBox(height: 8),
+            TextButton(
+              onPressed: () {
+                setState(() {
+                  _searchController.clear();
+                  _searchText = '';
+                });
+              },
+              child: const Text('Clear Search'),
+            ),
+          ],
+        ),
+      );
+    }
 
     return RefreshIndicator(
       color: AppColors.leaf,
@@ -490,31 +591,6 @@ class _PlantProfileDetailsDialogState extends State<PlantProfileDetailsDialog> {
                         ),
                         _buildNestedConditionsSection(),
                         const SizedBox(height: 24),
-                        if (profile.notes.isNotEmpty) ...[
-                          const SectionHeader(
-                            title: "Additional Notes",
-                            icon: Icons.note_outlined,
-                          ),
-                          const SizedBox(height: 12),
-                          Container(
-                            width: double.infinity,
-                            padding: const EdgeInsets.all(16),
-                            decoration: BoxDecoration(
-                              color: Colors.grey.shade50,
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: Colors.grey.shade200),
-                            ),
-                            child: Text(
-                              profile.notes,
-                              style: const TextStyle(
-                                fontSize: 15,
-                                color: AppColors.textPrimary,
-                                height: 1.4,
-                              ),
-                            ),
-                          ),
-                          const SizedBox(height: 24),
-                        ],
                         if (profile.growDurationDays > 0) ...[
                           // Use RepaintBoundary for static content 
                           RepaintBoundary(

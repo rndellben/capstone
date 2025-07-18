@@ -8,6 +8,9 @@ import '../../components/custom_button.dart';
 import '../../components/mode_selector.dart';
 import '../../../core/constants/app_colors.dart';
 import '../../../providers/auth_provider.dart';
+import 'package:file_selector/file_selector.dart';
+import 'dart:io' show File;
+import 'dart:typed_data';
 
 class AddPlantProfileDialog extends StatefulWidget {
   final String? userId;
@@ -209,6 +212,12 @@ class _AddPlantProfileDialogState extends State<AddPlantProfileDialog> {
             prefixIcon: Icons.description_outlined,
             controller: _descriptionController,
             maxLines: 3,
+          ),
+          const SizedBox(height: 16),
+          ElevatedButton.icon(
+            icon: const Icon(Icons.upload_file),
+            label: const Text('Upload Plant Profiles CSV'),
+            onPressed: _selectAndUploadCsv,
           ),
           const SizedBox(height: 16),
           CustomTextField(
@@ -698,7 +707,7 @@ class _AddPlantProfileDialogState extends State<AddPlantProfileDialog> {
         // Show error message
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text('Error: ${e.toString()}'),
+            content: Text('Error: $e'),
             backgroundColor: Colors.red,
             duration: const Duration(seconds: 3),
           ),
@@ -706,6 +715,68 @@ class _AddPlantProfileDialogState extends State<AddPlantProfileDialog> {
         setState(() {
           _isSubmitting = false;
         });
+      }
+    }
+  }
+
+  void _selectAndUploadCsv() async {
+    final XTypeGroup typeGroup = XTypeGroup(
+      label: 'csv',
+      extensions: ['csv'],
+    );
+    final XFile? file = await openFile(acceptedTypeGroups: [typeGroup]);
+
+    if (file != null) {
+      try {
+        Uint8List fileBytes = await file.readAsBytes();
+        final String tempPath = file.path ?? '/tmp/${file.name}';
+        final File tempFile = File(tempPath);
+        await tempFile.writeAsBytes(fileBytes);
+
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        final userId = await authProvider.getCurrentUserId();
+        final provider = Provider.of<PlantProfileProvider>(context, listen: false);
+        final result = await provider.uploadPlantProfilesCsv(
+          userId: userId ?? '',
+          csvFile: tempFile,
+        );
+
+        if (result['error'] == null) {
+          // Show a completion dialog, then close both dialogs
+          await showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (context) => AlertDialog(
+              title: const Text('Upload Complete'),
+              content: const Text('CSV uploaded successfully!'),
+              actions: [
+                TextButton(
+                  onPressed: () {
+                    Navigator.of(context).pop(); // Close the dialog
+                  },
+                  child: const Text('OK'),
+                ),
+              ],
+            ),
+          );
+          if (mounted) {
+            Navigator.of(context).pop(); // Close the AddPlantProfileDialog
+          }
+        } else {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text('Upload failed: ${result['error']}'),
+              backgroundColor: Colors.red,
+            ),
+          );
+        }
+      } catch (e) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Error: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
       }
     }
   }

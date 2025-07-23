@@ -590,42 +590,8 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
                 ),
               ),
               const SizedBox(height: 20),
-              Row(
-                children: [
-                  Expanded(
-                    child: Divider(color: AppColors.textSecondary.withOpacity(0.3)),
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Text(
-                      "Or sign up with",
-                      style: TextStyle(
-                        color: AppColors.textSecondary,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  Expanded(
-                    child: Divider(color: AppColors.textSecondary.withOpacity(0.3)),
-                  ),
-                ],
-              ),
-              const SizedBox(height: 20),
-              Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  CustomButton(
-                    text: "",
-                    onPressed: () {
-                      // Handle Google sign in
-                    },
-                    icon: Icons.g_mobiledata_rounded,
-                    variant: ButtonVariant.social,
-                    width: 70,
-                    height: 50,
-                  ),
-                ],
-              ),
+             
+
               const SizedBox(height: 24),
               Row(
                 mainAxisAlignment: MainAxisAlignment.center,
@@ -1083,43 +1049,7 @@ class _RegisterPageState extends State<RegisterPage> with SingleTickerProviderSt
               isLoading: authProvider.isLoading,
             ),
             const SizedBox(height: 24),
-            Row(
-              children: [
-                Expanded(
-                  child: Divider(color: AppColors.textSecondary.withOpacity(0.3)),
-                ),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  child: Text(
-                    "Or sign up with",
-                    style: TextStyle(
-                      color: AppColors.textSecondary,
-                      fontSize: 14,
-                    ),
-                  ),
-                ),
-                Expanded(
-                  child: Divider(color: AppColors.textSecondary.withOpacity(0.3)),
-                ),
-              ],
-            ),
-            const SizedBox(height: 24),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                CustomButton(
-                  text: "",
-                  onPressed: () {
-                    // Handle Google sign in
-                  },
-                  icon: Icons.g_mobiledata_rounded,
-                  variant: ButtonVariant.social,
-                  width: 70,
-                  height: 50,
-                ),
-              ],
-            ),
-            const SizedBox(height: 30),
+
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [

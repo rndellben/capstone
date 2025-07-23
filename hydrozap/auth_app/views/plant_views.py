@@ -227,9 +227,9 @@ class PlantProfileCSVDownloadView(APIView):
             json.dumps(plant_profile.get("optimal_conditions", {}), ensure_ascii=False)
         ]
 
-        # Write CSV to memory
+        # Write CSV to memory with correct quoting and line endings
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
         writer.writerow(header)
         writer.writerow(row)
         csv_content = output.getvalue()
@@ -249,6 +249,13 @@ class GrowProfileCSVDownloadView(APIView):
         if not grow_profile:
             return Response({"error": "Grow profile not found"}, status=status.HTTP_404_NOT_FOUND)
 
+        # Generate a random identifier with crop name prefix
+        crop_name = grow_profile.get("name", "").lower().replace(" ", "_")
+        if not crop_name:
+            crop_name = "plant"
+        random_id = str(uuid.uuid4())[:8]
+        random_identifier = f"{crop_name}_{random_id}"
+
         # Prepare CSV header and row (match plant_profiles_template.csv)
         header = [
             "identifier",
@@ -259,28 +266,35 @@ class GrowProfileCSVDownloadView(APIView):
             "grow_duration_days",
             "optimal_conditions"
         ]
-        # Compose row
+        # Get the original data
+        original_name = grow_profile.get("name", "")
+        profile_description = f"Downloaded from HydroZap Global Leaderboard. Original profile: {original_name}"
+        profile_notes = "This profile was downloaded from the Global Leaderboard and may represent a high-performing grow configuration."
+        
+        # Compose row with hardcoded notes and description
         row = [
-            grow_profile.get("id", profile_id),
-            grow_profile.get("name", ""),
-            grow_profile.get("description", ""),
-            grow_profile.get("notes", ""),
+            random_identifier,  # Generate a random identifier instead of using the ID
+            original_name,
+            profile_description,  # Hardcoded description mentioning Global Leaderboard
+            profile_notes,  # Hardcoded notes
             grow_profile.get("mode", "simple"),
             str(grow_profile.get("grow_duration_days", "")),
             json.dumps(grow_profile.get("optimal_conditions", {}), ensure_ascii=False)
         ]
 
-        # Write CSV to memory
+        # Write CSV to memory with correct quoting and line endings
         output = io.StringIO()
-        writer = csv.writer(output)
+        writer = csv.writer(output, quoting=csv.QUOTE_MINIMAL, lineterminator='\n')
         writer.writerow(header)
         writer.writerow(row)
         csv_content = output.getvalue()
         output.close()
 
-        # Return as downloadable file
-        response = Response(csv_content, content_type='text/csv')
-        response["Content-Disposition"] = f'attachment; filename="grow_profile_{profile_id}.csv"'
+        # Return as downloadable file using Django's HttpResponse instead of REST framework's Response
+        from django.http import HttpResponse
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="grow_profile_{profile_id}.csv"'
+        response.write(csv_content)
         return response
 
 class GrowProfileView(APIView):

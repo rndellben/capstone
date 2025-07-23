@@ -918,21 +918,6 @@ class _LeaderboardEntryDetailPageState extends State<LeaderboardEntryDetailPage>
                 ),
               ],
             ),
-            if (hasStages && stageData != null) ...[
-              SizedBox(height: 8),
-              Padding(
-                padding: EdgeInsets.only(left: isSmallScreen ? 6 : 8),
-                child: Text(
-                  '(Showing ${stageData == optimalConditions!['stages']['maturation'] ? 'maturation' : 
-                           stageData == optimalConditions['stages']['vegetative'] ? 'vegetative' : 'transplanting'} stage conditions)',
-                  style: TextStyle(
-                    fontSize: isSmallScreen ? 10 : 12,
-                    fontStyle: FontStyle.italic,
-                    color: Colors.grey[600],
-                  ),
-                ),
-              ),
-            ],
             SizedBox(height: isSmallScreen ? 12 : 16),
             _buildConditionRow(
               label: 'Temperature', 

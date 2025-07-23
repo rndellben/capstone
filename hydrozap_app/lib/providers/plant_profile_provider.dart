@@ -227,4 +227,29 @@ class PlantProfileProvider with ChangeNotifier {
       return {'error': _error};
     }
   }
+
+  Future<Map<String, dynamic>> uploadPlantProfilesCsvWeb({
+    required String userId,
+    required Uint8List fileBytes,
+    required String fileName,
+  }) async {
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final result = await _apiService.uploadPlantProfilesCsvWeb(
+        userId: userId,
+        fileBytes: fileBytes,
+        fileName: fileName,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return result;
+    } catch (e) {
+      _error = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return {'error': _error};
+    }
+  }
 } 

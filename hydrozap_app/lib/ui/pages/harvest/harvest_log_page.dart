@@ -472,7 +472,7 @@ class _HarvestLogPageState extends State<HarvestLogPage> with SingleTickerProvid
                           ),
                           filled: true,
                           fillColor: Colors.grey[50],
-                          suffixText: 'g',
+                          suffixText: 'units',
                           prefixIcon: Icon(
                             Icons.scale,
                             color: Colors.grey[400],

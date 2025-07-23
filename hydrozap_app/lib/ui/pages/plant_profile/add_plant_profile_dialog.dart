@@ -11,6 +11,7 @@ import '../../../providers/auth_provider.dart';
 import 'package:file_selector/file_selector.dart';
 import 'dart:io' show File;
 import 'dart:typed_data';
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 class AddPlantProfileDialog extends StatefulWidget {
   final String? userId;
@@ -729,17 +730,30 @@ class _AddPlantProfileDialogState extends State<AddPlantProfileDialog> {
     if (file != null) {
       try {
         Uint8List fileBytes = await file.readAsBytes();
-        final String tempPath = file.path ?? '/tmp/${file.name}';
-        final File tempFile = File(tempPath);
-        await tempFile.writeAsBytes(fileBytes);
-
         final authProvider = Provider.of<AuthProvider>(context, listen: false);
         final userId = await authProvider.getCurrentUserId();
         final provider = Provider.of<PlantProfileProvider>(context, listen: false);
-        final result = await provider.uploadPlantProfilesCsv(
-          userId: userId ?? '',
-          csvFile: tempFile,
-        );
+
+        Map<String, dynamic> result;
+
+        if (kIsWeb) {
+          // On web, upload using bytes and filename
+          result = await provider.uploadPlantProfilesCsvWeb(
+            userId: userId ?? '',
+            fileBytes: fileBytes,
+            fileName: file.name,
+          );
+        } else {
+          // On mobile/desktop, upload using File
+          final String tempPath = file.path ?? '/tmp/${file.name}';
+          final File tempFile = File(tempPath);
+          await tempFile.writeAsBytes(fileBytes);
+
+          result = await provider.uploadPlantProfilesCsv(
+            userId: userId ?? '',
+            csvFile: tempFile,
+          );
+        }
 
         if (result['error'] == null) {
           // Show a completion dialog, then close both dialogs

@@ -16,6 +16,8 @@ import '../../../data/local/shared_prefs.dart';
 import '../utils/logger.dart';
 import '../../core/models/profile_change_log_model.dart';
 import 'package:open_file/open_file.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
+import 'dart:html' as html;
 
 class ApiService {
   /// ✅ Register a new user
@@ -796,6 +798,37 @@ class ApiService {
     }
   }
 
+  /// Upload plant profiles via CSV (web version)
+  Future<Map<String, dynamic>> uploadPlantProfilesCsvWeb({
+    required String userId,
+    required Uint8List fileBytes,
+    required String fileName,
+  }) async {
+    final uri = Uri.parse(ApiEndpoints.plantProfilesCsvUpload);
+    final request = http.MultipartRequest('POST', uri);
+    request.fields['user_id'] = userId;
+    request.files.add(http.MultipartFile.fromBytes('file', fileBytes, filename: fileName));
+
+    try {
+      final streamedResponse = await request.send();
+      final response = await http.Response.fromStream(streamedResponse);
+      if (response.statusCode == 201) {
+        return jsonDecode(response.body) as Map<String, dynamic>;
+      } else {
+        return {
+          'error': 'Failed to upload CSV',
+          'statusCode': response.statusCode,
+          'body': response.body
+        };
+      }
+    } catch (e) {
+      return {
+        'error': 'Exception occurred',
+        'message': e.toString(),
+      };
+    }
+  }
+
   /// Download plant profile CSV by identifier and save to device
   Future<String?> downloadPlantProfileCsv(String identifier) async {
     try {
@@ -825,15 +858,29 @@ class ApiService {
       final url = ApiEndpoints.growProfileCsvDownload(profileId);
       final response = await http.get(Uri.parse(url));
       if (response.statusCode == 200) {
-        // Get temporary directory (to match PDF report behavior)
-        final directory = await getTemporaryDirectory();
-        final filePath = '${directory.path}/grow_profile_$profileId.csv';
-        final file = File(filePath);
-        await file.writeAsBytes(response.bodyBytes);
-        await OpenFile.open(filePath);
-        return filePath;
+        final bytes = response.bodyBytes;
+        final fileName = 'grow_profile_$profileId.csv';
+
+        if (kIsWeb) {
+          // Web: Use browser download
+          final blob = html.Blob([bytes]);
+          final url = html.Url.createObjectUrlFromBlob(blob);
+          final anchor = html.AnchorElement(href: url)
+            ..setAttribute('download', fileName)
+            ..click();
+          html.Url.revokeObjectUrl(url);
+          return 'Downloaded as $fileName';
+        } else {
+          // Mobile/Desktop: Save to temp and open
+          final directory = await getTemporaryDirectory();
+          final filePath = '${directory.path}/$fileName';
+          final file = File(filePath);
+          await file.writeAsBytes(bytes);
+          await OpenFile.open(filePath);
+          return filePath;
+        }
       } else {
-        logger.e('Failed to download grow profile CSV: \\${response.statusCode}');
+        logger.e('Failed to download grow profile CSV: ${response.statusCode}');
         return null;
       }
     } catch (e) {
